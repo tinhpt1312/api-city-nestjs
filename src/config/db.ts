@@ -1,6 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
+import {
+  Capital,
+  CityFacility,
+  Country,
+  District,
+  Facility,
+  Role,
+  Users,
+} from 'src/entities/index';
 
 @Injectable()
 export class PostgeresConfiguration implements TypeOrmOptionsFactory {
@@ -14,8 +23,8 @@ export class PostgeresConfiguration implements TypeOrmOptionsFactory {
       username: this.configService.get('DB_USERNAME'),
       password: this.configService.get('DB_PASSWORD'),
       database: this.configService.get('DB_DATABASE'),
-      entities: ['dist/**/entities/*, entity{.ts,.js}'],
-      subscribers: ['dist/**/subscr/*, entity{.ts,.js}'],
+      entities: ['dist/**/entities/*.entity{.ts,.js}'],
+      subscribers: ['dist/**/subscribers/*.subscriber{.ts,.js}'],
       logging: true,
       logger: 'advanced-console',
     };

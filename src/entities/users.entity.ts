@@ -27,6 +27,7 @@ export class Users {
   @JoinColumn()
   capital: Capital;
 
-  @OneToMany(() => Role, (roles) => roles.users)
+  @ManyToOne(() => Role, (roles) => roles.users)
+  @JoinColumn()
   roles: Role[];
 }

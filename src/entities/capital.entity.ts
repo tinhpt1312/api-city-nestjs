@@ -13,17 +13,25 @@ import { CityFacility } from './citifaciliti.entity';
 
 @Entity({ name: 'capital' })
 export class Capital {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({
+    name: 'id',
+    type: 'int',
+  })
   id: number;
 
-  @Column({ unique: true })
+  @Column({
+    name: 'name',
+    unique: true,
+    type: 'text',
+    nullable: false,
+  })
   name: string;
 
   @Column({ type: 'text', nullable: true })
   description: string;
 
   @Column({ type: 'boolean', default: true })
-  active: string;
+  active: boolean;
 
   @OneToMany(() => Users, (users) => users.capital)
   users: Users[];
@@ -34,6 +42,6 @@ export class Capital {
   @OneToMany(() => District, (distinct) => distinct.capital)
   district: District[];
 
-  @OneToMany(() => CityFacility, (cityfacility) => cityfacility.facility)
+  @OneToMany(() => CityFacility, (cityfacility) => cityfacility.capital)
   cityfacility: CityFacility[];
 }

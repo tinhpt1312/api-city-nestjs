@@ -13,7 +13,9 @@ export class Country {
   id: number;
 
   @Column({ unique: true })
+  name: string;
+
   @OneToOne(() => Capital)
-  @JoinColumn()
+  @JoinColumn({ name: 'capitalid' })
   capital: Capital;
 }
