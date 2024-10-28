@@ -2,12 +2,14 @@ import {
   Column,
   Entity,
   JoinColumn,
+  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Capital } from './capital.entity';
 import { Role } from './roles.entity';
+import { RoleToUser } from './role-user.entity';
 
 @Entity({ name: 'users' })
 export class Users {
@@ -23,11 +25,13 @@ export class Users {
   @Column()
   image: string;
 
+  @Column({ unique: true })
+  email: string;
+
   @ManyToOne(() => Capital, (capital) => capital.users)
   @JoinColumn()
   capital: Capital;
 
-  @ManyToOne(() => Role, (roles) => roles.users)
-  @JoinColumn()
-  roles: Role[];
+  @OneToMany(() => RoleToUser, (roleuser) => roleuser.user)
+  roleuser: RoleToUser[];
 }

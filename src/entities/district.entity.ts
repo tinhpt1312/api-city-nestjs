@@ -6,7 +6,7 @@ export class District {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ unique: true })
   name: string;
 
   @ManyToOne(() => Capital, (capital) => capital.district)

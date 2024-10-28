@@ -5,3 +5,4 @@ export * from './district.entity';
 export * from './roles.entity';
 export * from './users.entity';
 export * from './faciliti.entity';
+export * from './role-user.entity';

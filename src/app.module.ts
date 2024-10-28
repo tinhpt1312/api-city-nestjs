@@ -9,6 +9,7 @@ import { CountriesModule } from './modules/countries/countries.module';
 import { DistrictModule } from './modules/district/district.module';
 import { FacilitiesModule } from './modules/facilities/facilities.module';
 import { RolesModule } from './modules/roles/roles.module';
+import { RoleToUserModule } from './modules/role-user/roleuser.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { RolesModule } from './modules/roles/roles.module';
     DistrictModule,
     FacilitiesModule,
     RolesModule,
+    RoleToUserModule,
   ],
   controllers: [],
   providers: [],

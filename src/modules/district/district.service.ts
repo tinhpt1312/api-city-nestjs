@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Capital, District } from 'src/entities';
 import { Repository } from 'typeorm';
-import { CreateDistrictDto } from './dto';
+import { CreateDistrictDto, UpdateDistrictDto } from './dto';
 
 @Injectable()
 export class DistrictService {
@@ -30,6 +30,37 @@ export class DistrictService {
   }
 
   async findAll() {
-    return this.districtRepository.find();
+    return this.districtRepository
+      .createQueryBuilder('district')
+      .leftJoin('district.capital', 'capital')
+      .addSelect('capital.name')
+      .getMany();
+  }
+
+  async findOne(id: number) {
+    return await this.districtRepository.findOne({
+      where: { id },
+    });
+  }
+
+  async update(
+    id: number,
+    updateDistrictDto: UpdateDistrictDto,
+  ): Promise<District> {
+    const district = await this.findOne(id);
+
+    if (!district) throw new Error('The district is empty');
+
+    Object.assign(district, updateDistrictDto);
+
+    return await this.districtRepository.save(district);
+  }
+
+  async remove(id: number) {
+    const district = await this.findOne(id);
+    if (!district) {
+      throw new NotFoundException();
+    }
+    return await this.districtRepository.remove(district);
   }
 }

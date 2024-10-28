@@ -1,7 +1,9 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { CityFacilityService } from './citifacilities.service';
 import { CreateCityFacilityDto } from './dto';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('CityToFacility')
 @Controller('cityfacility')
 export class CityFacilityController {
   constructor(private readonly cityfacilityService: CityFacilityService) {}

@@ -43,16 +43,16 @@ export class CapitalService {
   async findAll() {
     return await this.capitalRepository
       .createQueryBuilder('capital')
-      .leftJoinAndSelect('capital.district', 'district') // District sẽ tự động join dựa trên quan hệ
-      .leftJoinAndSelect('capital.users', 'users') // Tương tự cho users
-      .leftJoinAndSelect('capital.country', 'countries') // Country cũng sẽ tự động join
-      .leftJoinAndSelect('capital.cityfacility', 'cityfacility') // CityFacility join theo quan hệ nhiều-nhiều
-      .leftJoinAndSelect('cityfacility.facility', 'facilities') // Join Facility qua bảng trung gian CityFacility
+      .leftJoinAndSelect('capital.district', 'district')
+      .leftJoinAndSelect('capital.users', 'users')
+      .leftJoinAndSelect('capital.country', 'countries')
+      .leftJoinAndSelect('capital.cityfacility', 'cityfacility')
+      .leftJoinAndSelect('cityfacility.facility', 'facilities')
       .addSelect([
-        'countries.name', // Chọn thêm trường country name
-        'users.username', // Chọn thêm trường username của users
-        'district.name', // Chọn thêm trường name của district
-        'facilities.name', // Chọn thêm trường name của facility
+        'countries.name',
+        'users.username',
+        'district.name',
+        'facilities.name',
       ])
       .getMany();
   }
@@ -80,11 +80,13 @@ export class CapitalService {
     return await this.capitalRepository.save(city);
   }
 
-  async remove(id: number) {
-    const city = await this.findOne(id);
-    if (!city) {
-      throw new NotFoundException();
-    }
-    return await this.capitalRepository.remove(city);
+  async remove(id: number): Promise<void> {
+    const capital = await this.capitalRepository.findOneBy({ id });
+
+    if (!capital) throw new NotFoundException('capital not found');
+
+    await this.cityFacilityRepository.delete({ capital });
+
+    await this.capitalRepository.delete(id);
   }
 }

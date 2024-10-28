@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
-import { CityFacility, Facility } from 'src/entities/index';
 
 export class CreateCapitalDto {
   @ApiProperty({
@@ -17,7 +16,7 @@ export class CreateCapitalDto {
 
   @ApiProperty({
     description: `services available in this city, enter service id`,
-    type: Number,
+    type: Array,
   })
   facilitiesId: number[];
 }

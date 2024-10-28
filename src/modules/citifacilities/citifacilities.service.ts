@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Capital, CityFacility, Facility } from 'src/entities';
 import { Repository } from 'typeorm';
@@ -37,5 +37,20 @@ export class CityFacilityService {
     return await this.cityFacilityRepository.find({
       relations: ['capital', 'facility'],
     });
+  }
+
+  async findOne(id: number): Promise<CityFacility | null> {
+    return await this.cityFacilityRepository
+      .createQueryBuilder('cityfacility')
+      .where('cityfacility.id = :id', { id })
+      .getOne();
+  }
+
+  async remove(id: number) {
+    const country = await this.findOne(id);
+    if (!country) {
+      throw new NotFoundException();
+    }
+    return await this.cityFacilityRepository.remove(country);
   }
 }

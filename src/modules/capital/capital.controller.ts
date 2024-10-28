@@ -10,7 +10,9 @@ import {
 } from '@nestjs/common';
 import { CapitalService } from './capital.service';
 import { UpdateCapitalDto, CreateCapitalDto } from './dto/index';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Capital')
 @Controller('capital')
 export class CapitalController {
   constructor(private readonly capitalService: CapitalService) {}
