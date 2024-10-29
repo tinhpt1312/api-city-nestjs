@@ -18,14 +18,14 @@ import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { Users } from 'src/entities';
 
+@UseGuards(AuthGuard('jwt'))
+@ApiBearerAuth('access-token')
 @ApiTags('Capital')
 @Controller('capitals')
 export class CapitalController {
   constructor(private readonly capitalService: CapitalService) {}
 
-  @UseGuards(AuthGuard('jwt'))
   @Post()
-  @ApiBearerAuth('access-token')
   newCapital(
     @Body() createCapital: CreateCapitalDto,
     @Req() request: Request & { user: Users },

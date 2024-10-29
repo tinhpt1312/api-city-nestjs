@@ -6,11 +6,15 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { FacilitiesService } from './facilities.service';
 import { CreateFacilitiDto, UpdateFacilitiDto } from './dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 
+@UseGuards(AuthGuard('jwt'))
+@ApiBearerAuth('access-token')
 @ApiTags('Facility')
 @Controller('facility')
 export class FacilitiesController {

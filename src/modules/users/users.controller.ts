@@ -14,6 +14,8 @@ import { UserService } from './users.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { AuthGuard } from '@nestjs/passport';
 
+@UseGuards(AuthGuard('jwt'))
+@ApiBearerAuth('access-token')
 @ApiTags('Users')
 @Controller('users')
 export class UserController {
@@ -24,8 +26,6 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
-  @UseGuards(AuthGuard('jwt'))
-  @ApiBearerAuth('access-token')
   @ApiOperation({
     summary: 'Get list user',
     description: 'Retrieve the list of user',
