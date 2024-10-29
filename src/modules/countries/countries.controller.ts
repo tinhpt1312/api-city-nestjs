@@ -12,7 +12,7 @@ import { CreateCountryDto, UpdateCountryDto } from './dto';
 import { ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Country')
-@Controller('county')
+@Controller('countries')
 export class CountriesController {
   constructor(private readonly countryService: CountriesService) {}
 

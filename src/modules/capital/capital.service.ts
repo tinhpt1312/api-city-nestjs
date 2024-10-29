@@ -1,8 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Capital, CityFacility, Facility } from 'src/entities';
+import { Capital, CityFacility, Facility, Users } from 'src/entities';
 import { In, Repository } from 'typeorm';
 import { UpdateCapitalDto, CreateCapitalDto } from './dto/index';
+import { CapitalResponseDto } from './dto/capital.response';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class CapitalService {
@@ -14,12 +16,16 @@ export class CapitalService {
     private facilityRepository: Repository<Facility>,
   ) {}
 
-  async newCapital(createCapitalDto: CreateCapitalDto): Promise<Capital> {
+  async newCapital(
+    createCapitalDto: CreateCapitalDto,
+    user: Users,
+  ): Promise<CapitalResponseDto> {
     const { name, description, facilitiesId } = createCapitalDto;
 
     const newCapital = new Capital();
     newCapital.name = name;
     newCapital.description = description;
+    newCapital.createdBy = user;
     await this.capitalRepository.save(newCapital);
 
     const facilities = await this.facilityRepository.find({
@@ -37,12 +43,13 @@ export class CapitalService {
 
     await this.cityFacilityRepository.save(cityFacilities);
 
-    return newCapital;
+    return plainToInstance(CapitalResponseDto, newCapital);
   }
 
   async findAll() {
     return await this.capitalRepository
       .createQueryBuilder('capital')
+      .where('capital.deleted_at IS NULL')
       .leftJoinAndSelect('capital.district', 'district')
       .leftJoinAndSelect('capital.users', 'users')
       .leftJoinAndSelect('capital.country', 'countries')
@@ -87,6 +94,6 @@ export class CapitalService {
 
     await this.cityFacilityRepository.delete({ capital });
 
-    await this.capitalRepository.delete(id);
+    await this.capitalRepository.softDelete(id);
   }
 }

@@ -7,19 +7,31 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { CapitalService } from './capital.service';
 import { UpdateCapitalDto, CreateCapitalDto } from './dto/index';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { LocalAuthGuard } from '../auth/guards/local-auth.guards';
+import { AuthGuard } from '@nestjs/passport';
+import { Request } from 'express';
+import { Users } from 'src/entities';
 
 @ApiTags('Capital')
-@Controller('capital')
+@Controller('capitals')
 export class CapitalController {
   constructor(private readonly capitalService: CapitalService) {}
 
+  @UseGuards(AuthGuard('jwt'))
   @Post()
-  newCapital(@Body() createCapital: CreateCapitalDto) {
-    return this.capitalService.newCapital(createCapital);
+  @ApiBearerAuth('access-token')
+  newCapital(
+    @Body() createCapital: CreateCapitalDto,
+    @Req() request: Request & { user: Users },
+  ) {
+    const user = request.user;
+    return this.capitalService.newCapital(createCapital, user);
   }
 
   @Get()

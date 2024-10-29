@@ -18,7 +18,7 @@ export class CountriesService {
       id: capitalid,
     });
 
-    if (!capital) throw new Error('the city is empty');
+    if (!capital) throw new NotFoundException('the city is empty');
 
     const newCountry = this.countriesRepository.create({
       name,
@@ -50,16 +50,16 @@ export class CountriesService {
 
     if (!country) throw new Error('The country is empty');
 
-    Object.assign(country, updateCountryDto);
-
-    return await this.countriesRepository.save(country);
+    return await this.countriesRepository.save({ updateCountryDto, id });
   }
 
   async remove(id: number) {
     const country = await this.findOne(id);
+
     if (!country) {
       throw new NotFoundException();
     }
+
     return await this.countriesRepository.remove(country);
   }
 }

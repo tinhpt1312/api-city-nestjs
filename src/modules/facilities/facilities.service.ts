@@ -39,9 +39,7 @@ export class FacilitiesService {
 
     if (!facility) throw new Error(`This facilities is not empty`);
 
-    Object.assign(facility, updateFacilityDto);
-
-    return await this.facilityRepository.save(facility);
+    return await this.facilityRepository.save({ ...updateFacilityDto, id });
   }
 
   async remove(id: number) {

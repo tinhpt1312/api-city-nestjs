@@ -1,51 +1,72 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Capital, Role, RoleToUser, Users } from 'src/entities';
-import { DeepPartial, In, Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { CreateUserDto } from './dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectRepository(Users) private userRepository: Repository<Users>,
-    @InjectRepository(Capital) private capitalRepository: Repository<Capital>,
-    @InjectRepository(Role) private roleRepository: Repository<Role>,
+    @InjectRepository(Users)
+    private readonly userRepository: Repository<Users>,
+
+    @InjectRepository(Capital)
+    private readonly capitalRepository: Repository<Capital>,
+
+    @InjectRepository(Role)
+    private readonly roleRepository: Repository<Role>,
+
     @InjectRepository(RoleToUser)
-    private roleUserRepository: Repository<RoleToUser>,
+    private readonly roleUserRepository: Repository<RoleToUser>,
   ) {}
+
+  private async findCapitalById(capitalId: number): Promise<Capital> {
+    const capital = await this.capitalRepository.findOneBy({ id: capitalId });
+
+    if (!capital) throw new NotFoundException('Capital not found');
+
+    return capital;
+  }
+
+  private async findRolesByIds(roleIds: number[]): Promise<Role[]> {
+    const roles = await this.roleRepository.findBy({ id: In(roleIds) });
+
+    if (roles.length === 0) throw new NotFoundException('Roles not found');
+
+    return roles;
+  }
 
   async create(createUserDto: CreateUserDto): Promise<Users> {
     const { username, password, email, image, capitalid, roleid } =
       createUserDto;
 
-    const newUser = new Users();
-    newUser.username = username;
-    newUser.password = password;
-    newUser.email = email;
-    newUser.image = image;
+    const capital = await this.findCapitalById(capitalid);
 
-    const capital = await this.capitalRepository.findOneBy({ id: capitalid });
-    if (!capital) throw new Error('Capital not found');
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    newUser.capital = capital;
+    const newUser = this.userRepository.create({
+      username,
+      password: hashedPassword,
+      email,
+      image,
+      capital,
+    });
     await this.userRepository.save(newUser);
 
-    const roles = await this.roleRepository.findBy({ id: In(roleid) });
-    if (roles.length === 0) throw new Error('Roles not found');
+    const roles = await this.findRolesByIds(roleid);
 
-    const userRole = roles.map((role) => {
-      const roleToUser = new RoleToUser();
-      roleToUser.role = role;
-      roleToUser.user = newUser;
-      return roleToUser;
-    });
+    const userRoles = roles.map((role) => ({
+      role,
+      user: newUser,
+    }));
 
-    await this.roleUserRepository.save(userRole);
+    await this.roleUserRepository.save(userRoles);
 
     return newUser;
   }
 
-  async findAll() {
+  async findAll(): Promise<Users[]> {
     return this.userRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.capital', 'capital')
@@ -62,8 +83,8 @@ export class UserService {
       .getMany();
   }
 
-  async findOne(id: number) {
-    return this.userRepository
+  async findOne(id: number): Promise<Users | null> {
+    const user = await this.userRepository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.capital', 'capital')
       .leftJoinAndSelect('user.roleuser', 'roleuser')
@@ -76,66 +97,48 @@ export class UserService {
         'capital.name',
         'role.name',
       ])
-      .where('user.id= :id', { id })
+      .where('user.id = :id', { id })
       .getOne();
+
+    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+
+    return user;
+  }
+
+  async findByUserName(username: string) {
+    return this.userRepository.findOne({
+      where: { username },
+    });
   }
 
   async update(
     id: number,
     updateUserDto: Partial<CreateUserDto>,
   ): Promise<Users> {
-    // const user = await this.userRepository.findOneBy({ id });
-    // if (!user) throw new Error('User not found');
+    const existingUser = await this.findOne(id);
 
-    // Object.assign(user, updateUserDto);
+    const updatedUser = this.userRepository.merge(existingUser, updateUserDto);
 
-    // if (updateUserDto.capitalid) {
-    //   const capital = await this.capitalRepository.findOneBy({
-    //     id: updateUserDto.capitalid,
-    //   });
-    //   if (!capital) throw new Error('Capital not found');
-    //   user.capital = capital;
-    // }
-
-    // await this.userRepository.save(user);
-
-    // if (updateUserDto.roleid) {
-    //   await this.roleUserRepository.delete({ user });
-
-    //   const roles = await this.roleRepository.findBy({
-    //     id: In(updateUserDto.roleid),
-    //   });
-    //   if (roles.length === 0) throw new Error('Roles not found');
-
-    //   const userRoles = roles.map((role) => {
-    //     const roleToUser = new RoleToUser();
-    //     roleToUser.role = role;
-    //     roleToUser.user = user;
-    //     return roleToUser;
-    //   });
-
-    //   await this.roleUserRepository.save(userRoles);
-    // }
-
-    // return user;
-
-    const city = await this.findOne(id);
-
-    if (!city) {
-      throw new NotFoundException();
-    }
-
-    Object.assign(city, updateUserDto);
-
-    return await this.userRepository.save(city);
+    return await this.userRepository.save(updatedUser);
   }
 
   async delete(id: number): Promise<void> {
-    const user = await this.userRepository.findOneBy({ id });
-    if (!user) throw new Error('User not found');
+    const user = await this.findOne(id);
+
+    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
 
     await this.roleUserRepository.delete({ user });
 
     await this.userRepository.delete(id);
+  }
+
+  async validateUser(username: string, password: string): Promise<any> {
+    const user = await this.findByUserName(username);
+
+    if (user && (await bcrypt.compare(password, user.password))) {
+      const { password, ...result } = user;
+      return result;
+    }
+    return null;
   }
 }
