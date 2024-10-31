@@ -5,10 +5,10 @@ import { RolesController } from './roles.controller';
 import { RolesService } from './roles.service';
 import { AuthModule } from '../auth/auth.module';
 import { UserService } from '../users/users.service';
-import { CapitalModule } from '../capital/capital.module';
-import { RoleToUserModule } from '../role-user/roleuser.module';
+import { CapitalModule } from '../capitals/capital.module';
+import { RoleToUserModule } from '../role-users/roleuser.module';
 import { FacilitiesModule } from '../facilities/facilities.module';
-import { CityFacilityModule } from '../citifacilities/citifacilities.module';
+import { CityFacilityModule } from '../city-facilities/citifacilities.module';
 
 @Module({
   imports: [

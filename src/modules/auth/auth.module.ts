@@ -9,14 +9,14 @@ import { UserService } from '../users/users.service';
 import { UserModule } from '../users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Users } from 'src/entities';
-import { CapitalModule } from '../capital/capital.module';
-import { RoleToUserModule } from '../role-user/roleuser.module';
+import { CapitalModule } from '../capitals/capital.module';
+import { RoleToUserModule } from '../role-users/roleuser.module';
 import { RolesModule } from '../roles/roles.module';
 import { LocalAuthGuard } from './guards/local-auth.guard';
 import { LocalStrategy } from './strategies/local.strategy';
 import { RolesGuard } from './guards/role.guard';
 import { JwtAuthGuard } from './guards/jwt.guard';
-import { DistrictModule } from '../district/district.module';
+import { DistrictModule } from '../districts/district.module';
 import { APP_GUARD } from '@nestjs/core';
 
 @Module({

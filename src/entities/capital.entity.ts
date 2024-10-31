@@ -9,10 +9,10 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Users } from './users.entity';
-import { Country } from './countries.entity';
+import { Users } from './user.entity';
+import { Country } from './country.entity';
 import { District } from './district.entity';
-import { CityFacility } from './citifaciliti.entity';
+import { CityFacility } from './city-facility.entity';
 
 @Entity({ name: 'capital' })
 export class Capital {

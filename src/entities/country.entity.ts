@@ -9,7 +9,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Capital } from './capital.entity';
-import { Users } from './users.entity';
+import { Users } from './user.entity';
 
 @Entity({ name: 'countries' })
 export class Country {

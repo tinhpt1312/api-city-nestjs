@@ -8,8 +8,8 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { CityFacility } from './citifaciliti.entity';
-import { Users } from './users.entity';
+import { CityFacility } from './city-facility.entity';
+import { Users } from './user.entity';
 
 @Entity({ name: 'facilities' })
 export class Facility {

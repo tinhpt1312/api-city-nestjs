@@ -3,12 +3,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { District, Users } from 'src/entities';
 import { DistrictController } from './district.controller';
 import { DistrictService } from './district.service';
-import { CapitalModule } from '../capital/capital.module';
+import { CapitalModule } from '../capitals/capital.module';
 import { AuthModule } from '../auth/auth.module';
 import { RolesModule } from '../roles/roles.module';
-import { RoleToUserModule } from '../role-user/roleuser.module';
+import { RoleToUserModule } from '../role-users/roleuser.module';
 import { FacilitiesModule } from '../facilities/facilities.module';
-import { CityFacilityModule } from '../citifacilities/citifacilities.module';
+import { CityFacilityModule } from '../city-facilities/citifacilities.module';
 import { UserService } from '../users/users.service';
 
 @Module({

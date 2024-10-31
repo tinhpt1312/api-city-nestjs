@@ -5,7 +5,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Users } from './users.entity';
+import { Users } from './user.entity';
 import { RoleToUser } from './role-user.entity';
 
 @Entity({ name: 'roles' })
