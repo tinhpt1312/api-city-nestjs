@@ -6,30 +6,41 @@ import {
   Param,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { FacilitiesService } from './facilities.service';
 import { CreateFacilitiDto, UpdateFacilitiDto } from './dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
+import { Users } from 'src/entities';
+import { Request } from 'express';
+import { Roles } from '../auth/decorator/roles.decorator';
+import { RoleEnum } from 'src/types/auth.type';
+import { SkipJwtAuth } from '../auth/decorator/skip-auth.decorator';
 
-@UseGuards(AuthGuard('jwt'))
-@ApiBearerAuth('access-token')
 @ApiTags('Facility')
+@ApiBearerAuth()
+@Roles(RoleEnum.Admin, RoleEnum.Manager)
 @Controller('facility')
 export class FacilitiesController {
   constructor(private readonly facilityService: FacilitiesService) {}
 
   @Post()
-  create(@Body() createFacilitiDto: CreateFacilitiDto) {
-    return this.facilityService.create(createFacilitiDto);
-  }
+  create(
+    @Body() createFacilitiDto: CreateFacilitiDto,
+    @Req() request: Request & { user: Users },
+  ) {
+    const user = request.user;
 
+    return this.facilityService.create(createFacilitiDto, user);
+  }
+  @SkipJwtAuth()
   @Get()
   findAll() {
     return this.facilityService.findAll();
   }
 
+  @SkipJwtAuth()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.facilityService.findOne(+id);

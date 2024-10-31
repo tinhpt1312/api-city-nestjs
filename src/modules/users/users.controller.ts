@@ -12,12 +12,14 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserService } from './users.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
-import { AuthGuard } from '@nestjs/passport';
+import { Roles } from '../auth/decorator/roles.decorator';
+import { RoleEnum } from '../../types/auth.type';
+import { SkipJwtAuth } from '../auth/decorator/skip-auth.decorator';
 
-@UseGuards(AuthGuard('jwt'))
-@ApiBearerAuth('access-token')
 @ApiTags('Users')
 @Controller('users')
+@ApiBearerAuth()
+@Roles(RoleEnum.Admin)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -30,11 +32,13 @@ export class UserController {
     summary: 'Get list user',
     description: 'Retrieve the list of user',
   })
+  @SkipJwtAuth()
   @Get()
   findAll() {
     return this.userService.findAll();
   }
 
+  @SkipJwtAuth()
   @Get(':id')
   findOne(@Param('id', new ParseIntPipe()) id: string) {
     return this.userService.findOne(+id);

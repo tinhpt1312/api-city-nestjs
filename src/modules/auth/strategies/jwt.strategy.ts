@@ -1,8 +1,9 @@
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { jwtConstants } from '../constants/constants';
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserService } from 'src/modules/users/users.service';
+import { RoleToUser } from 'src/entities';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -15,6 +16,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    return this.userService.findOne(payload.sub);
+    const user = await this.userService.findByIdWithRoles(payload.sub);
+
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    const roles = user.roleuser.map(
+      (roleUser: RoleToUser) => roleUser.role.name,
+    );
+
+    return { ...user, roles };
   }
 }

@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Capital, District } from 'src/entities';
+import { Capital, District, Users } from 'src/entities';
 import { Repository } from 'typeorm';
 import { CreateDistrictDto, UpdateDistrictDto } from './dto';
 
@@ -28,7 +28,10 @@ export class DistrictService {
     return capital;
   }
 
-  async create(createDistrictDto: CreateDistrictDto): Promise<District> {
+  async create(
+    createDistrictDto: CreateDistrictDto,
+    user: Users,
+  ): Promise<District> {
     const { name, capitalid } = createDistrictDto;
 
     const capital = await this.findCapitalById(capitalid);
@@ -36,6 +39,7 @@ export class DistrictService {
     const newDistrict = this.districtRepository.create({
       name,
       capital,
+      createdBy: user,
     });
 
     return await this.districtRepository.save(newDistrict);
@@ -66,7 +70,6 @@ export class DistrictService {
   ): Promise<District> {
     const { capitalid } = updateDistrictDto;
 
-    // Kiểm tra tính hợp lệ của `capitalId` trong bảng `capital`
     if (capitalid) {
       const capitalExists = await this.capitalRepository.findOne({
         where: { id: capitalid },
@@ -77,25 +80,19 @@ export class DistrictService {
       }
     }
 
-    // Tìm district cần cập nhật
     const district = await this.findOne(id);
 
     if (!district) {
       throw new Error(`District with id ${id} not found`);
     }
 
-    // Gộp dữ liệu cũ và mới, sau đó lưu vào cơ sở dữ liệu
     const updatedDistrict = { ...district, ...updateDistrictDto, id };
     return this.districtRepository.save(updatedDistrict);
   }
 
-  async remove(id: number) {
+  async remove(id: number): Promise<void> {
     const district = await this.findOne(id);
 
-    if (!district) {
-      throw new NotFoundException();
-    }
-
-    return await this.districtRepository.remove(district);
+    await this.districtRepository.softDelete(id);
   }
 }

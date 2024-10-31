@@ -76,15 +76,13 @@ export class CapitalService {
   }
 
   async update(id: number, updateCapitalDto: UpdateCapitalDto) {
-    const city = await this.findOne(id);
+    const country = await this.findOne(id);
 
-    if (!city) {
+    if (!country) {
       throw new NotFoundException();
     }
 
-    Object.assign(city, updateCapitalDto);
-
-    return await this.capitalRepository.save(city);
+    return await this.capitalRepository.update(id, updateCapitalDto);
   }
 
   async remove(id: number): Promise<void> {

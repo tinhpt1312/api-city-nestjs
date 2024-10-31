@@ -39,7 +39,10 @@ export class Capital {
   @OneToMany(() => Users, (users) => users.capital)
   users: Users[];
 
-  @OneToOne(() => Country, (country) => country.capital)
+  @OneToOne(() => Country, (country) => country.capital, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
   country: Country;
 
   @OneToMany(() => District, (distinct) => distinct.capital)

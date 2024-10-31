@@ -11,6 +11,9 @@ import { FacilitiesModule } from './modules/facilities/facilities.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { RoleToUserModule } from './modules/role-user/roleuser.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { UserService } from './modules/users/users.service';
+import { APP_GUARD } from '@nestjs/core';
+import { RolesGuard } from './modules/auth/guards/role.guard';
 
 @Module({
   imports: [
@@ -31,6 +34,6 @@ import { AuthModule } from './modules/auth/auth.module';
     AuthModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [UserService],
 })
 export class AppModule {}

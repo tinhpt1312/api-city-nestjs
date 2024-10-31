@@ -5,15 +5,23 @@ import { CityFacilityService } from './citifacilities.service';
 import { CityFacilityController } from './citifacilities.controller';
 import { CapitalModule } from '../capital/capital.module';
 import { FacilitiesModule } from '../facilities/facilities.module';
+import { RolesModule } from '../roles/roles.module';
+import { AuthModule } from '../auth/auth.module';
+import { RoleToUserModule } from '../role-user/roleuser.module';
+import { UserService } from '../users/users.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([CityFacility]),
+    forwardRef(() => RolesModule),
+    forwardRef(() => RoleToUserModule),
+    forwardRef(() => AuthModule),
     forwardRef(() => CapitalModule),
     forwardRef(() => FacilitiesModule),
+    forwardRef(() => CityFacilityModule),
   ],
   controllers: [CityFacilityController],
-  providers: [CityFacilityService],
+  providers: [CityFacilityService, UserService],
   exports: [TypeOrmModule],
 })
 export class CityFacilityModule {}

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Capital, Country } from 'src/entities';
+import { Capital, Country, Users } from 'src/entities';
 import { Repository } from 'typeorm';
 import { CreateCountryDto, UpdateCountryDto } from './dto';
 
@@ -11,7 +11,10 @@ export class CountriesService {
     @InjectRepository(Capital) private capitalRepository: Repository<Capital>,
   ) {}
 
-  async create(createCountryDto: CreateCountryDto): Promise<Country> {
+  async create(
+    createCountryDto: CreateCountryDto,
+    user: Users,
+  ): Promise<Country> {
     const { name, capitalid } = createCountryDto;
 
     const capital = await this.capitalRepository.findOneBy({
@@ -23,6 +26,7 @@ export class CountriesService {
     const newCountry = this.countriesRepository.create({
       name,
       capital,
+      createdBy: user,
     });
 
     return await this.countriesRepository.save(newCountry);
@@ -39,9 +43,8 @@ export class CountriesService {
   async findOne(id: number) {
     return await this.countriesRepository
       .createQueryBuilder('country')
-      .leftJoin('country.capital', 'capital')
-      .addSelect('capital.name')
-      .where('country.id= :id', { id })
+      .leftJoinAndSelect('country.capital', 'capital')
+      .where('country.id = :id', { id })
       .getOne();
   }
 
@@ -50,7 +53,9 @@ export class CountriesService {
 
     if (!country) throw new Error('The country is empty');
 
-    return await this.countriesRepository.save({ updateCountryDto, id });
+    Object.assign(country, updateCountryDto);
+
+    return await this.countriesRepository.save(country);
   }
 
   async remove(id: number) {
@@ -60,6 +65,6 @@ export class CountriesService {
       throw new NotFoundException();
     }
 
-    return await this.countriesRepository.remove(country);
+    return await this.countriesRepository.softDelete(id);
   }
 }

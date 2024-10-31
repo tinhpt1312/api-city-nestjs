@@ -26,7 +26,7 @@ export class CreateUserDto {
   capitalid: number;
 
   @ApiProperty({
-    type: Array,
+    type: [Number],
   })
   roleid: number[];
 }

@@ -1,14 +1,21 @@
-import { Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LocalAuthGuard } from './guards/local-auth.guards';
+import { LocalAuthGuard } from './guards/local-auth.guard';
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { SkipJwtAuth } from './decorator/skip-auth.decorator';
 
 @Controller('auth')
 @ApiTags('Authen get Bearer')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @UseGuards(LocalAuthGuard)
   @Post('login')
   @ApiOperation({
     summary: 'User login',
@@ -20,7 +27,7 @@ export class AuthController {
       properties: {
         username: {
           type: 'string',
-          example: 'tititi',
+          example: 'tinhtut123',
           description: 'User username',
         },
         password: {
@@ -31,7 +38,13 @@ export class AuthController {
       },
     },
   })
-  async login(@Request() req) {
-    return this.authService.login(req.user);
+  // @UseGuards(LocalAuthGuard)
+  @SkipJwtAuth()
+  @Post('login')
+  async login(
+    @Body() { username, password }: { username: string; password: string },
+  ) {
+    const user = await this.authService.validateUser(username, password);
+    return this.authService.login(user);
   }
 }

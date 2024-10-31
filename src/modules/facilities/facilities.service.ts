@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Capital, CityFacility, Facility } from 'src/entities';
+import { Capital, CityFacility, Facility, Users } from 'src/entities';
 import { Repository } from 'typeorm';
 import { CreateFacilitiDto, UpdateFacilitiDto } from './dto';
 
@@ -9,10 +9,20 @@ export class FacilitiesService {
   constructor(
     @InjectRepository(Facility)
     private facilityRepository: Repository<Facility>,
+    @InjectRepository(CityFacility)
+    private cityFacilityRepository: Repository<CityFacility>,
   ) {}
 
-  async create(createFacilityDto: CreateFacilitiDto): Promise<Facility> {
-    const newFacility = this.facilityRepository.create(createFacilityDto);
+  async create(
+    createFacilityDto: CreateFacilitiDto,
+    user: Users,
+  ): Promise<Facility> {
+    const { name } = createFacilityDto;
+
+    const newFacility = this.facilityRepository.create({
+      name,
+      createdBy: user,
+    });
 
     return await this.facilityRepository.save(newFacility);
   }
@@ -26,12 +36,11 @@ export class FacilitiesService {
   }
 
   async findOne(id: number) {
-    return await this.facilityRepository.findOne({
-      where: { id },
-      relations: {
-        cityfacility: true,
-      },
-    });
+    return await this.facilityRepository
+      .createQueryBuilder('facility')
+      .leftJoinAndSelect('facility.cityfacility', 'cityfacility')
+      .where('facility.id = :id', { id })
+      .getOne();
   }
 
   async update(id: number, updateFacilityDto: UpdateFacilitiDto) {
@@ -42,11 +51,13 @@ export class FacilitiesService {
     return await this.facilityRepository.save({ ...updateFacilityDto, id });
   }
 
-  async remove(id: number) {
+  async remove(id: number): Promise<void> {
     const facility = await this.findOne(id);
 
-    if (!facility) throw Error('oh no! this facility is not empty!');
+    if (!facility) throw Error('Oh no! This facility does not exist!');
 
-    return await this.facilityRepository.remove(facility);
+    await this.cityFacilityRepository.delete({ facility: { id: facility.id } });
+
+    await this.facilityRepository.softDelete(facility.id);
   }
 }

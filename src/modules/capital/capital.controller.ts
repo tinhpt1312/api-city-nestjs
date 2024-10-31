@@ -11,16 +11,17 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { CapitalService } from './capital.service';
-import { UpdateCapitalDto, CreateCapitalDto } from './dto/index';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { LocalAuthGuard } from '../auth/guards/local-auth.guards';
-import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { Users } from 'src/entities';
+import { Roles } from '../auth/decorator/roles.decorator';
+import { RoleEnum } from 'src/types/auth.type';
+import { SkipJwtAuth } from '../auth/decorator/skip-auth.decorator';
+import { CreateCapitalDto, UpdateCapitalDto } from './dto';
 
-@UseGuards(AuthGuard('jwt'))
-@ApiBearerAuth('access-token')
 @ApiTags('Capital')
+@ApiBearerAuth()
+@Roles(RoleEnum.Admin, RoleEnum.Manager)
 @Controller('capitals')
 export class CapitalController {
   constructor(private readonly capitalService: CapitalService) {}
@@ -34,11 +35,13 @@ export class CapitalController {
     return this.capitalService.newCapital(createCapital, user);
   }
 
+  @SkipJwtAuth()
   @Get()
   findAll() {
     return this.capitalService.findAll();
   }
 
+  @SkipJwtAuth()
   @Get(':id')
   findOne(@Param('id', new ParseIntPipe()) id: string) {
     return this.capitalService.findOne(+id);

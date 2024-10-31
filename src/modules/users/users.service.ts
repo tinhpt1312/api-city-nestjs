@@ -129,7 +129,7 @@ export class UserService {
 
     await this.roleUserRepository.delete({ user });
 
-    await this.userRepository.delete(id);
+    await this.userRepository.softDelete(id);
   }
 
   async validateUser(username: string, password: string): Promise<any> {
@@ -140,5 +140,44 @@ export class UserService {
       return result;
     }
     return null;
+  }
+
+  async getUserRoles(userId: number): Promise<string[]> {
+    const userRoles = await this.roleUserRepository.find({
+      where: { user: { id: userId } },
+      relations: ['role'],
+    });
+
+    return userRoles.map((roleToUser) => roleToUser.role.name);
+  }
+
+  async findUserRoles(userId: number): Promise<Role[]> {
+    const userWithRoles = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['roleuser', 'roleuser.role'],
+    });
+
+    console.log(userWithRoles);
+    return userWithRoles?.roleuser.map((roleUser) => roleUser.role) || [];
+  }
+
+  async findByIdWithRoles(userId: number): Promise<Users> {
+    return this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['roleuser', 'roleuser.role'], // Liên kết với bảng RoleToUser và Role
+    });
+  }
+
+  async findById(id: number): Promise<Users> {
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: ['roleuser', 'capital'], // include any necessary relations
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    return user;
   }
 }
