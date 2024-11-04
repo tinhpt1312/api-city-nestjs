@@ -7,21 +7,19 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   Req,
-  UseGuards,
 } from '@nestjs/common';
 import { CapitalService } from './capital.service';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
-import { Users } from 'src/entities';
-import { Roles } from '../auth/decorator/roles.decorator';
 import { RoleEnum } from 'src/types/auth.type';
-import { SkipJwtAuth } from '../auth/decorator/skip-auth.decorator';
 import { CreateCapitalDto, UpdateCapitalDto } from './dto';
+import { Auth, Public } from '../auth/decorator';
+import { Users } from 'src/entities';
 
-@ApiTags('Capital')
-@ApiBearerAuth()
-@Roles(RoleEnum.Admin, RoleEnum.Manager)
+@Auth(RoleEnum.Admin, RoleEnum.Manager)
+@ApiTags('Capitals')
 @Controller('capitals')
 export class CapitalController {
   constructor(private readonly capitalService: CapitalService) {}
@@ -34,22 +32,30 @@ export class CapitalController {
     const user = request.user;
     return this.capitalService.newCapital(createCapital, user);
   }
-
-  @SkipJwtAuth()
+  @Public()
   @Get()
-  findAll() {
-    return this.capitalService.findAll();
+  findAll(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ): Promise<{ data: any; total: number; page: number; limit: number }> {
+    return this.capitalService.findAll(page, limit);
   }
 
-  @SkipJwtAuth()
+  @Public()
   @Get(':id')
   findOne(@Param('id', new ParseIntPipe()) id: string) {
     return this.capitalService.findOne(+id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCapitalDto: UpdateCapitalDto) {
-    return this.capitalService.update(+id, updateCapitalDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateCapitalDto: UpdateCapitalDto,
+    @Req() request: Request & { user: Users },
+  ) {
+    const user = request.user;
+
+    return this.capitalService.update(+id, updateCapitalDto, user);
   }
 
   @Delete(':id')

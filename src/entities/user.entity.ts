@@ -1,51 +1,45 @@
 import {
   Column,
-  CreateDateColumn,
-  DeleteDateColumn,
   Entity,
   JoinColumn,
-  ManyToMany,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Capital } from './capital.entity';
-import { RoleToUser } from './role-user.entity';
+import { Capital, RoleToUser } from './index';
+import { TimestampImpl } from './common/timestamp.impl';
 
-@Entity({ name: 'users' })
+@Entity({ schema: 'public', name: 'users' })
 export class Users {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({ type: 'int' })
   id: number;
 
-  @Column({ unique: true })
+  @Column({ unique: true, nullable: false })
   username: string;
 
-  @Column()
+  @Column({ nullable: false })
   password: string;
 
-  @Column()
+  @Column({ nullable: true })
   image: string;
 
-  @Column({ unique: true })
+  @Column({ unique: true, nullable: false })
   email: string;
 
-  @ManyToOne(() => Capital, (capital) => capital.users)
+  @Column({ nullable: true, name: 'reset_token' })
+  resetToken: string;
+
+  @ManyToOne(() => Capital, (capital) => capital.users, { nullable: true })
   @JoinColumn()
   capital: Capital;
 
-  @OneToMany(() => RoleToUser, (roleuser) => roleuser.user)
-  roleuser: RoleToUser[];
+  @OneToMany(() => RoleToUser, (roleUser) => roleUser.user, { cascade: true })
+  roleUser: RoleToUser[];
 
-  @DeleteDateColumn({
-    name: 'deleted_at',
-  })
-  deleteAt?: Date | null;
+  @Column(() => TimestampImpl, { prefix: false })
+  timestamp!: TimestampImpl;
 
-  @CreateDateColumn({
-    type: 'timestamp without time zone',
-    name: 'created_at',
-    nullable: true,
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  createdAt?: Date | null;
+  constructor() {
+    this.timestamp = new TimestampImpl();
+  }
 }

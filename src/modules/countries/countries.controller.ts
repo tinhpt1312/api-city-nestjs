@@ -6,22 +6,18 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
-  UseGuards,
-} from '@nestjs/common';
+} from '@nestjs/common/decorators';
 import { CountriesService } from './countries.service';
 import { CreateCountryDto, UpdateCountryDto } from './dto';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { Users } from 'src/entities';
 import { Request } from 'express';
-import { RolesGuard } from '../auth/guards/role.guard';
-import { Roles } from '../auth/decorator/roles.decorator';
 import { RoleEnum } from 'src/types/auth.type';
-import { SkipJwtAuth } from '../auth/decorator/skip-auth.decorator';
+import { Auth, Public } from '../auth/decorator';
 
-@ApiBearerAuth()
-@UseGuards(RolesGuard)
-@Roles(RoleEnum.Admin, RoleEnum.Manager)
+@Auth(RoleEnum.Admin, RoleEnum.Manager)
 @ApiTags('Country')
 @Controller('countries')
 export class CountriesController {
@@ -36,22 +32,30 @@ export class CountriesController {
 
     return this.countryService.create(createCountryDto, user);
   }
-
-  @SkipJwtAuth()
+  @Public()
   @Get()
-  findAll() {
-    return this.countryService.findAll();
+  findAll(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ): Promise<{ data: any; total: number; page: number; limit: number }> {
+    return this.countryService.findAll(page, limit);
   }
 
-  @SkipJwtAuth()
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.countryService.findOne(+id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCountryDto: UpdateCountryDto) {
-    return this.countryService.update(+id, updateCountryDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateCountryDto: UpdateCountryDto,
+    @Req() request: Request & { user: Users },
+  ) {
+    const user = request.user;
+
+    return this.countryService.update(+id, updateCountryDto, user);
   }
 
   @Delete(':id')

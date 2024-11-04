@@ -6,23 +6,22 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import { DistrictService } from './district.service';
 import { CreateDistrictDto, UpdateDistrictDto } from './dto';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { Users } from 'src/entities';
 import { Request } from 'express';
-import { Roles } from '../auth/decorator/roles.decorator';
 import { RoleEnum } from 'src/types/auth.type';
-import { RolesGuard } from '../auth/guards/role.guard';
-import { SkipJwtAuth } from '../auth/decorator/skip-auth.decorator';
+import { Public } from '../auth/decorator/skip-auth.decorator';
+import { Auth } from '../auth/decorator';
 
-@ApiBearerAuth()
-@Roles(RoleEnum.Admin, RoleEnum.Manager)
-@ApiTags('District')
-@Controller('district')
+@Auth(RoleEnum.Admin, RoleEnum.Manager)
+@ApiTags('Districts')
+@Controller('districts')
 export class DistrictController {
   constructor(private readonly districtService: DistrictService) {}
 
@@ -36,13 +35,16 @@ export class DistrictController {
     return this.districtService.create(createDistricDto, user);
   }
 
-  @SkipJwtAuth()
+  @Public()
   @Get()
-  findAll() {
-    return this.districtService.findAll();
+  findAll(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ): Promise<{ data: any; total: number; page: number; limit: number }> {
+    return this.districtService.findAll(page, limit);
   }
 
-  @SkipJwtAuth()
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.districtService.findOne(+id);
@@ -52,8 +54,10 @@ export class DistrictController {
   update(
     @Param('id') id: string,
     @Body() updateDistrictDto: UpdateDistrictDto,
+    @Req() request: Request & { user: Users },
   ) {
-    return this.districtService.update(+id, updateDistrictDto);
+    const user = request.user;
+    return this.districtService.update(+id, updateDistrictDto, user);
   }
 
   @Delete(':id')

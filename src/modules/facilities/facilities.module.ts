@@ -5,7 +5,6 @@ import { FacilitiesController } from './facilities.controller';
 import { FacilitiesService } from './facilities.service';
 import { CapitalModule } from '../capitals/capital.module';
 import { CityFacilityModule } from '../city-facilities/citifacilities.module';
-import { UserModule } from '../users/users.module';
 import { RolesModule } from '../roles/roles.module';
 import { RoleToUserModule } from '../role-users/roleuser.module';
 import { AuthModule } from '../auth/auth.module';

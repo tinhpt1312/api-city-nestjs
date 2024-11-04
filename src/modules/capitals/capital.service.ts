@@ -1,10 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Capital, CityFacility, Facility, Users } from 'src/entities';
 import { In, Repository } from 'typeorm';
-import { UpdateCapitalDto, CreateCapitalDto } from './dto/index';
-import { CapitalResponseDto } from './dto/capital.response';
-import { plainToInstance } from 'class-transformer';
+import { UpdateCapitalDto, CreateCapitalDto, CapitalResponseDto } from './dto';
 
 @Injectable()
 export class CapitalService {
@@ -22,75 +24,95 @@ export class CapitalService {
   ): Promise<CapitalResponseDto> {
     const { name, description, facilitiesId } = createCapitalDto;
 
-    const newCapital = new Capital();
-    newCapital.name = name;
-    newCapital.description = description;
-    newCapital.createdBy = user;
-    await this.capitalRepository.save(newCapital);
+    const newCapital = await this.capitalRepository.save({
+      name,
+      description,
+      timestamp: { createdBy: user },
+    });
 
     const facilities = await this.facilityRepository.find({
       where: { id: In(facilitiesId) },
     });
 
-    if (!facilities) throw new NotFoundException('Facility not found');
+    if (!facilities) {
+      throw new NotFoundException('Facility not found');
+    }
 
     const cityFacilities = facilities.map((facility) => {
       const facilityToCapital = new CityFacility();
-      facilityToCapital.capital = newCapital;
+      facilityToCapital.capitals = newCapital;
       facilityToCapital.facility = facility;
       return facilityToCapital;
     });
 
     await this.cityFacilityRepository.save(cityFacilities);
 
-    return plainToInstance(CapitalResponseDto, newCapital);
+    const responseDto = new CapitalResponseDto();
+    responseDto.id = newCapital.id;
+    responseDto.name = newCapital.name;
+    responseDto.description = newCapital.description;
+    responseDto.createdAt = newCapital.timestamp.createdAt;
+    responseDto.createdBy = newCapital.timestamp.createdBy?.username;
+
+    return responseDto;
   }
 
-  async findAll() {
-    return await this.capitalRepository
+  async findAll(page: number = 1, limit: number = 10) {
+    const [result, total] = await this.capitalRepository
       .createQueryBuilder('capital')
       .where('capital.deleted_at IS NULL')
-      .leftJoinAndSelect('capital.district', 'district')
+      .leftJoinAndSelect('capital.districts', 'districts')
       .leftJoinAndSelect('capital.users', 'users')
       .leftJoinAndSelect('capital.country', 'countries')
-      .leftJoinAndSelect('capital.cityfacility', 'cityfacility')
+      .leftJoinAndSelect('capital.cityfacilities', 'cityfacility')
       .leftJoinAndSelect('cityfacility.facility', 'facilities')
       .addSelect([
         'countries.name',
         'users.username',
-        'district.name',
+        'districts.name',
         'facilities.name',
       ])
-      .getMany();
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: result,
+      total,
+      page,
+      limit,
+    };
   }
 
   async findOne(id: number) {
-    return await this.capitalRepository
+    const capital = await this.capitalRepository
       .createQueryBuilder('capital')
-      .leftJoin('capital.district', 'district')
+      .where('capital.deleted_at IS NULL')
+      .leftJoin('capital.districts', 'district')
       .leftJoin('capital.users', 'users')
       .leftJoin('capital.country', 'country')
       .addSelect(['country.name', 'users.username', 'district.name'])
       .where('capital.id = :id', { id })
       .getOne();
+
+    return capital;
   }
 
-  async update(id: number, updateCapitalDto: UpdateCapitalDto) {
-    const country = await this.findOne(id);
+  async update(id: number, updateCapitalDto: UpdateCapitalDto, user: Users) {
+    const capital = await this.findOne(id);
 
-    if (!country) {
-      throw new NotFoundException();
-    }
+    Object.assign(capital, updateCapitalDto);
 
-    return await this.capitalRepository.update(id, updateCapitalDto);
+    capital.timestamp.updatedAt = new Date();
+    capital.timestamp.updatedBy = user;
+
+    return await this.capitalRepository.save(capital);
   }
 
   async remove(id: number): Promise<void> {
-    const capital = await this.capitalRepository.findOneBy({ id });
+    const capitals = await this.capitalRepository.findOneBy({ id });
 
-    if (!capital) throw new NotFoundException('capital not found');
-
-    await this.cityFacilityRepository.delete({ capital });
+    await this.cityFacilityRepository.delete({ capitals });
 
     await this.capitalRepository.softDelete(id);
   }

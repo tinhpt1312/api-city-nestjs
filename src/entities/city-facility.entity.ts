@@ -1,17 +1,18 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { Facility } from './facility.entity';
-import { Capital } from './capital.entity';
+import { Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Facility, Capital } from './index';
 
-@Entity({ name: 'cityfacilities' })
+@Entity({ schema: 'public',name: 'cityfacilities' })
 export class CityFacility {
   @PrimaryGeneratedColumn({
-    name: 'citytofacility_id',
+    name: 'id',
+    type: 'int'
   })
-  cityToFacilityId: number;
+  id: number;
 
-  @ManyToOne(() => Facility, (facility) => facility.cityfacility)
+  @ManyToOne(() => Facility, (facility) => facility.cityfacilities)
   facility: Facility;
 
-  @ManyToOne(() => Capital, (capital) => capital.cityfacility)
-  capital: Capital;
+  @ManyToOne(() => Capital, (capital) => capital.cityfacilities)
+  @JoinColumn({ name: 'capital_id' })
+  capitals: Capital;
 }

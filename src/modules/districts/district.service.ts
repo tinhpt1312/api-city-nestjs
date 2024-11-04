@@ -36,21 +36,30 @@ export class DistrictService {
 
     const capital = await this.findCapitalById(capitalid);
 
-    const newDistrict = this.districtRepository.create({
-      name,
-      capital,
-      createdBy: user,
-    });
+    const newDistrict = new District();
+    newDistrict.name = name;
+    newDistrict.capital = capital;
+    newDistrict.timestamp.createdBy = user;
 
     return await this.districtRepository.save(newDistrict);
   }
 
-  async findAll() {
-    return this.districtRepository
+  async findAll(page: number = 1, limit: number = 10) {
+    const [result, total] = await this.districtRepository
       .createQueryBuilder('district')
+      .where('district.deleted_at is null')
       .leftJoin('district.capital', 'capital')
       .addSelect('capital.name')
-      .getMany();
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: result,
+      total,
+      page,
+      limit,
+    };
   }
 
   async findOne(id: number): Promise<District | null> {
@@ -67,6 +76,7 @@ export class DistrictService {
   async update(
     id: number,
     updateDistrictDto: UpdateDistrictDto,
+    user: Users
   ): Promise<District> {
     const { capitalid } = updateDistrictDto;
 
@@ -85,9 +95,10 @@ export class DistrictService {
     if (!district) {
       throw new Error(`District with id ${id} not found`);
     }
+    district.timestamp.updatedAt = new Date();
+    district.timestamp.createdBy = user;
 
-    const updatedDistrict = { ...district, ...updateDistrictDto, id };
-    return this.districtRepository.save(updatedDistrict);
+    return this.districtRepository.save(district);
   }
 
   async remove(id: number): Promise<void> {

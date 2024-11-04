@@ -6,21 +6,20 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
-  UseGuards,
 } from '@nestjs/common';
 import { FacilitiesService } from './facilities.service';
 import { CreateFacilitiDto, UpdateFacilitiDto } from './dto';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { Users } from 'src/entities';
 import { Request } from 'express';
-import { Roles } from '../auth/decorator/roles.decorator';
 import { RoleEnum } from 'src/types/auth.type';
-import { SkipJwtAuth } from '../auth/decorator/skip-auth.decorator';
+import { Public } from '../auth/decorator/skip-auth.decorator';
+import { Auth } from '../auth/decorator';
 
+@Auth(RoleEnum.Admin, RoleEnum.Manager)
 @ApiTags('Facility')
-@ApiBearerAuth()
-@Roles(RoleEnum.Admin, RoleEnum.Manager)
 @Controller('facility')
 export class FacilitiesController {
   constructor(private readonly facilityService: FacilitiesService) {}
@@ -34,13 +33,16 @@ export class FacilitiesController {
 
     return this.facilityService.create(createFacilitiDto, user);
   }
-  @SkipJwtAuth()
+  @Public()
   @Get()
-  findAll() {
-    return this.facilityService.findAll();
+  findAll(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ): Promise<{ data: any; total: number; page: number; limit: number }> {
+    return this.facilityService.findAll(page, limit);
   }
 
-  @SkipJwtAuth()
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.facilityService.findOne(+id);
@@ -50,8 +52,11 @@ export class FacilitiesController {
   update(
     @Param('id') id: string,
     @Body() updateFacilityDto: UpdateFacilitiDto,
+    @Req() request: Request & { user: Users },
   ) {
-    return this.facilityService.update(+id, updateFacilityDto);
+    const user = request.user;
+
+    return this.facilityService.update(+id, updateFacilityDto, user);
   }
 
   @Delete(':id')

@@ -1,44 +1,27 @@
 import {
   Column,
-  CreateDateColumn,
-  DeleteDateColumn,
   Entity,
-  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Capital } from './capital.entity';
-import { Users } from './user.entity';
+import { Capital } from './index';
+import { TimestampImpl } from './common/timestamp.impl';
 
-@Entity({ name: 'district' })
+@Entity({ schema: 'public',name: 'districts' })
 export class District {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({type: 'int'})
   id: number;
 
-  @Column({ unique: true })
+  @Column({ unique: true, type: 'varchar', nullable: false })
   name: string;
 
-  @ManyToOne(() => Capital, (capital) => capital.district)
+  @ManyToOne(() => Capital, (capital) => capital.districts)
   capital: Capital;
 
-  @CreateDateColumn({
-    type: 'timestamp without time zone',
-    name: 'created_at',
-    nullable: true,
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  createdAt?: Date | null;
+  @Column(() => TimestampImpl, { prefix: false })
+  timestamp!: TimestampImpl;
 
-  @ManyToOne(() => Users)
-  @JoinColumn({
-    name: 'created_by',
-    referencedColumnName: 'id',
-    foreignKeyConstraintName: 'fk_timestamp_created_by',
-  })
-  createdBy?: Users | null;
-
-  @DeleteDateColumn({
-    name: 'deleted_at',
-  })
-  deleteAt?: Date | null;
+  constructor() {
+    this.timestamp = new TimestampImpl();
+  }
 }

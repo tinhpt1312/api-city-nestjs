@@ -1,7 +1,7 @@
 import { ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
-import { SKIP_JWT_AUTH } from '../decorator/skip-auth.decorator';
+import { PUBLIC_KEY } from '../decorator/skip-auth.decorator';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -12,13 +12,10 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
 
-    console.log('Request:', request.route.path);
-
-    const isSkipAuth = this.reflector.get<boolean>(
-      SKIP_JWT_AUTH,
+    const isSkipAuth = this.reflector.getAllAndOverride<boolean>(PUBLIC_KEY, [
       context.getHandler(),
-    );
-    console.log('Skip:', isSkipAuth);
+      context.getClass(),
+    ]);
 
     if (isSkipAuth) return true;
 

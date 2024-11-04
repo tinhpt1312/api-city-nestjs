@@ -1,9 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
-import { jwtConstants } from './constants/constants';
 import { AuthService } from './auth.service';
-import { JwtStrategy } from './strategies/jwt.strategy';
 import { AuthController } from './auth.controller';
 import { UserService } from '../users/users.service';
 import { UserModule } from '../users/users.module';
@@ -12,20 +10,26 @@ import { Users } from 'src/entities';
 import { CapitalModule } from '../capitals/capital.module';
 import { RoleToUserModule } from '../role-users/roleuser.module';
 import { RolesModule } from '../roles/roles.module';
-import { LocalAuthGuard } from './guards/local-auth.guard';
-import { LocalStrategy } from './strategies/local.strategy';
-import { RolesGuard } from './guards/role.guard';
-import { JwtAuthGuard } from './guards/jwt.guard';
 import { DistrictModule } from '../districts/district.module';
 import { APP_GUARD } from '@nestjs/core';
+import { JwtStrategy, LocalStrategy } from './strategies';
+import { JwtAuthGuard, LocalAuthGuard, RolesGuard } from './guards';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { RolesService } from '../roles/roles.service';
+import { EmailService } from '../email/email.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Users]),
     PassportModule,
-    JwtModule.register({
-      secret: jwtConstants.serect,
-      signOptions: { expiresIn: '10h' },
+    ConfigModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: { expiresIn: configService.get<string>('JWT_EXPIRATION') },
+      }),
+      inject: [ConfigService],
     }),
     forwardRef(() => UserModule),
     forwardRef(() => CapitalModule),
@@ -34,8 +38,10 @@ import { APP_GUARD } from '@nestjs/core';
     forwardRef(() => DistrictModule),
   ],
   providers: [
+    RolesService,
     AuthService,
     UserService,
+    EmailService,
     JwtStrategy,
     LocalStrategy,
     LocalAuthGuard,

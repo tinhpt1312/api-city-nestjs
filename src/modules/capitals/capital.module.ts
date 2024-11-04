@@ -1,6 +1,5 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Capital } from 'src/entities/index';
 import { CapitalController } from './capital.controller';
 import { CapitalService } from './capital.service';
 import { FacilitiesModule } from '../facilities/facilities.module';
@@ -9,6 +8,7 @@ import { AuthModule } from '../auth/auth.module';
 import { RoleToUserModule } from '../role-users/roleuser.module';
 import { RolesModule } from '../roles/roles.module';
 import { UserService } from '../users/users.service';
+import { Capital } from '../../entities';
 
 @Module({
   imports: [

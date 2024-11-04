@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Capital, Role, RoleToUser, Users } from 'src/entities';
 import { Repository, In } from 'typeorm';
-import { CreateUserDto } from './dto';
+import { CreateUserDto, UpdateUserDto } from './dto';
 import * as bcrypt from 'bcrypt';
+import { Injectable } from '@nestjs/common/decorators';
+import { NotFoundException } from '@nestjs/common/exceptions';
 
 @Injectable()
 export class UserService {
@@ -37,7 +38,7 @@ export class UserService {
     return roles;
   }
 
-  async create(createUserDto: CreateUserDto): Promise<Users> {
+  async create(createUserDto: CreateUserDto, user: Users): Promise<Users> {
     const { username, password, email, image, capitalid, roleid } =
       createUserDto;
 
@@ -52,6 +53,8 @@ export class UserService {
       image,
       capital,
     });
+    newUser.timestamp.createdBy = user;
+
     await this.userRepository.save(newUser);
 
     const roles = await this.findRolesByIds(roleid);
@@ -66,37 +69,34 @@ export class UserService {
     return newUser;
   }
 
-  async findAll(): Promise<Users[]> {
-    return this.userRepository
+  async findAll(page: number = 1, limit: number = 10) {
+    const [result, total] = await this.userRepository
       .createQueryBuilder('user')
+      .where('user.deleted_at is null')
       .leftJoinAndSelect('user.capital', 'capital')
-      .leftJoinAndSelect('user.roleuser', 'roleuser')
+      .leftJoinAndSelect('user.roleUser', 'roleuser')
       .leftJoinAndSelect('roleuser.role', 'role')
-      .addSelect([
-        'user.id',
-        'user.username',
-        'user.image',
-        'user.email',
-        'capital.name',
-        'role.name',
-      ])
-      .getMany();
+      .addSelect(['capital.name', 'role.name'])
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: result,
+      total,
+      page,
+      limit,
+    };
   }
 
   async findOne(id: number): Promise<Users | null> {
     const user = await this.userRepository
       .createQueryBuilder('user')
+      .where('user.deleted_at is null')
       .leftJoinAndSelect('user.capital', 'capital')
-      .leftJoinAndSelect('user.roleuser', 'roleuser')
+      .leftJoinAndSelect('user.roleUser', 'roleuser')
       .leftJoinAndSelect('roleuser.role', 'role')
-      .addSelect([
-        'user.id',
-        'user.username',
-        'user.image',
-        'user.email',
-        'capital.name',
-        'role.name',
-      ])
+      .addSelect(['capital.name', 'role.name'])
       .where('user.id = :id', { id })
       .getOne();
 
@@ -105,21 +105,37 @@ export class UserService {
     return user;
   }
 
-  async findByUserName(username: string) {
-    return this.userRepository.findOne({
-      where: { username },
+  async createUser(
+    username: string,
+    password: string,
+    email: string,
+  ): Promise<Users> {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = this.userRepository.create({
+      username,
+      password: hashedPassword,
+      email,
     });
+    return this.userRepository.save(newUser);
+  }
+
+  async findUserByUsername(username: string): Promise<Users | undefined> {
+    return this.userRepository.findOne({ where: { username } });
   }
 
   async update(
     id: number,
-    updateUserDto: Partial<CreateUserDto>,
+    updateUserDto: UpdateUserDto,
+    user: Users,
   ): Promise<Users> {
     const existingUser = await this.findOne(id);
 
-    const updatedUser = this.userRepository.merge(existingUser, updateUserDto);
+    Object.assign(existingUser, updateUserDto);
 
-    return await this.userRepository.save(updatedUser);
+    existingUser.timestamp.updatedAt = new Date();
+    existingUser.timestamp.updatedBy = user;
+
+    return await this.userRepository.save(existingUser);
   }
 
   async delete(id: number): Promise<void> {
@@ -142,42 +158,40 @@ export class UserService {
     return null;
   }
 
-  async getUserRoles(userId: number): Promise<string[]> {
-    const userRoles = await this.roleUserRepository.find({
-      where: { user: { id: userId } },
-      relations: ['role'],
-    });
+  async updatePassword(id: number, newPassword: string): Promise<void> {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    return userRoles.map((roleToUser) => roleToUser.role.name);
+    await this.userRepository.update(id, { password: hashedPassword });
   }
 
-  async findUserRoles(userId: number): Promise<Role[]> {
-    const userWithRoles = await this.userRepository.findOne({
-      where: { id: userId },
-      relations: ['roleuser', 'roleuser.role'],
-    });
+  async invalidateResetToken(id: number): Promise<void> {
+    await this.userRepository.update(id, { resetToken: null });
+  }
 
-    console.log(userWithRoles);
-    return userWithRoles?.roleuser.map((roleUser) => roleUser.role) || [];
+  async saveResetToken(id: number, resetToken: string): Promise<void> {
+    await this.userRepository.update(id, { resetToken });
+  }
+
+  async findByUserName(username: string): Promise<Users> {
+    return this.userRepository.findOne({
+      where: { username },
+    });
+  }
+
+  async findByEmail(email: string): Promise<Users> {
+    return this.userRepository.findOne({
+      where: { email },
+    });
   }
 
   async findByIdWithRoles(userId: number): Promise<Users> {
     return this.userRepository.findOne({
       where: { id: userId },
-      relations: ['roleuser', 'roleuser.role'], // Liên kết với bảng RoleToUser và Role
+      relations: ['roleUser', 'roleUser.role'],
     });
   }
 
-  async findById(id: number): Promise<Users> {
-    const user = await this.userRepository.findOne({
-      where: { id },
-      relations: ['roleuser', 'capital'], // include any necessary relations
-    });
-
-    if (!user) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
-
-    return user;
+  async findByResetToken(resetToken: string): Promise<Users> {
+    return this.userRepository.findOne({ where: { resetToken } });
   }
 }
