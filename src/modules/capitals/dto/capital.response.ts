@@ -14,6 +14,10 @@ export class CapitalResponseDto {
   createdAt: Date;
 
   @Expose()
-  @Transform(({ obj }) => obj.createdBy.username)
+  @Transform(({ obj }) => obj.timestamp.createdBy.username)
   createdBy: string;
+
+  @Expose()
+  @Transform(({ obj }) => obj.timestamp.createdBy.id) // Lấy id từ createdBy
+  createdById: number;
 }

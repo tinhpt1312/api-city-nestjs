@@ -1,21 +1,16 @@
 import {
   Column,
-  CreateDateColumn,
-  DeleteDateColumn,
   Entity,
-  JoinColumn,
-  ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Users } from './users.entity';
-import { Country } from './countries.entity';
-import { District } from './district.entity';
-import { CityFacility } from './citifaciliti.entity';
+import { Users, CityFacility, District, Country } from './index';
+import { TimestampImpl } from './common/timestamp.impl';
 
-@Entity({ name: 'capital' })
-export class Capital {
+
+@Entity({ schema: 'public', name: 'capitals' })
+export class Capital  {
   @PrimaryGeneratedColumn({
     name: 'id',
     type: 'int',
@@ -25,7 +20,7 @@ export class Capital {
   @Column({
     name: 'name',
     unique: true,
-    type: 'text',
+    type: 'varchar',
     nullable: false,
   })
   name: string;
@@ -39,33 +34,23 @@ export class Capital {
   @OneToMany(() => Users, (users) => users.capital)
   users: Users[];
 
-  @OneToOne(() => Country, (country) => country.capital)
+  @OneToOne(() => Country, (country) => country.capital, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
   country: Country;
 
-  @OneToMany(() => District, (distinct) => distinct.capital)
-  district: District[];
+  @OneToMany(() => District, (districts) => districts.capital)
+  districts: District[];
 
-  @OneToMany(() => CityFacility, (cityfacility) => cityfacility.capital)
-  cityfacility: CityFacility[];
+  @OneToMany(() => CityFacility, (cityfacilities) => cityfacilities.capitals)
+  cityfacilities: CityFacility[];
 
-  @CreateDateColumn({
-    type: 'timestamp without time zone',
-    name: 'created_at',
-    nullable: true,
-    default: () => 'CURRENT_TIMESTAMP',
-  })
-  createdAt?: Date | null;
+  @Column(() => TimestampImpl, { prefix: false })
+  timestamp!: TimestampImpl;
 
-  @ManyToOne(() => Users)
-  @JoinColumn({
-    name: 'created_by',
-    referencedColumnName: 'id',
-    foreignKeyConstraintName: 'fk_timestamp_created_by',
-  })
-  createdBy?: Users | null;
+  constructor() {
+    this.timestamp = new TimestampImpl();
+  }
 
-  @DeleteDateColumn({
-    name: 'deleted_at',
-  })
-  deleteAt?: Date | null;
 }

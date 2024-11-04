@@ -7,20 +7,19 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   Req,
-  UseGuards,
 } from '@nestjs/common';
 import { CapitalService } from './capital.service';
-import { UpdateCapitalDto, CreateCapitalDto } from './dto/index';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { LocalAuthGuard } from '../auth/guards/local-auth.guards';
-import { AuthGuard } from '@nestjs/passport';
+import { ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
+import { RoleEnum } from 'src/types/auth.type';
+import { CreateCapitalDto, UpdateCapitalDto } from './dto';
+import { Auth, Public } from '../auth/decorator';
 import { Users } from 'src/entities';
 
-@UseGuards(AuthGuard('jwt'))
-@ApiBearerAuth('access-token')
-@ApiTags('Capital')
+@Auth(RoleEnum.Admin, RoleEnum.Manager)
+@ApiTags('Capitals')
 @Controller('capitals')
 export class CapitalController {
   constructor(private readonly capitalService: CapitalService) {}
@@ -33,20 +32,30 @@ export class CapitalController {
     const user = request.user;
     return this.capitalService.newCapital(createCapital, user);
   }
-
+  @Public()
   @Get()
-  findAll() {
-    return this.capitalService.findAll();
+  findAll(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ): Promise<{ data: any; total: number; page: number; limit: number }> {
+    return this.capitalService.findAll(page, limit);
   }
 
+  @Public()
   @Get(':id')
   findOne(@Param('id', new ParseIntPipe()) id: string) {
     return this.capitalService.findOne(+id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCapitalDto: UpdateCapitalDto) {
-    return this.capitalService.update(+id, updateCapitalDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateCapitalDto: UpdateCapitalDto,
+    @Req() request: Request & { user: Users },
+  ) {
+    const user = request.user;
+
+    return this.capitalService.update(+id, updateCapitalDto, user);
   }
 
   @Delete(':id')

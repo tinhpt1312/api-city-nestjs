@@ -6,17 +6,15 @@ export const setupSwagger = (app: INestApplication) => {
     .setTitle('NestJS APi')
     .setDescription('the city modern at the time')
     .setVersion('1.0')
-    .addBearerAuth(
-      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
-      'access-token',
-    )
+    .addBearerAuth()
+    .addCookieAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, options);
 
   SwaggerModule.setup('api', app, document, {
     swaggerOptions: {
-      persistAuthorization: false,
+      persistAuthorization: true,
     },
   });
 };

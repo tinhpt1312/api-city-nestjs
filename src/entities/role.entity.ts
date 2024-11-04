@@ -1,21 +1,19 @@
 import {
   Column,
   Entity,
-  ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Users } from './users.entity';
 import { RoleToUser } from './role-user.entity';
 
-@Entity({ name: 'roles' })
+@Entity({ schema: 'public',name: 'roles' })
 export class Role {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn({type: 'int'})
   id: number;
 
-  @Column({ unique: true })
+  @Column({ unique: true, nullable: false })
   name: string;
 
   @OneToMany(() => RoleToUser, (roleuser) => roleuser.role)
-  roleuser: RoleToUser[];
+  roleUser: RoleToUser[];
 }

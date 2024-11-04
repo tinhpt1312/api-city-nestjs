@@ -1,22 +1,22 @@
 import {
   Column,
   Entity,
-  ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Capital } from './index';
+import { CityFacility } from './index';
 import { TimestampImpl } from './common/timestamp.impl';
 
-@Entity({ schema: 'public',name: 'districts' })
-export class District {
+@Entity({ schema: 'public',name: 'facilities' })
+export class Facility {
   @PrimaryGeneratedColumn({type: 'int'})
   id: number;
 
-  @Column({ unique: true, type: 'varchar', nullable: false })
+  @Column({nullable: false, type:'varchar'})
   name: string;
 
-  @ManyToOne(() => Capital, (capital) => capital.districts)
-  capital: Capital;
+  @OneToMany(() => CityFacility, (cityfacilities) => cityfacilities.facility)
+  cityfacilities: CityFacility[];
 
   @Column(() => TimestampImpl, { prefix: false })
   timestamp!: TimestampImpl;

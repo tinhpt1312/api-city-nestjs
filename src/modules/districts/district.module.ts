@@ -1,18 +1,19 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Users } from 'src/entities';
-import { UserController } from './users.controller';
-import { UserService } from './users.service';
+import { District, Users } from 'src/entities';
+import { DistrictController } from './district.controller';
+import { DistrictService } from './district.service';
 import { CapitalModule } from '../capitals/capital.module';
-import { RoleToUserModule } from '../role-users/roleuser.module';
 import { AuthModule } from '../auth/auth.module';
+import { RolesModule } from '../roles/roles.module';
+import { RoleToUserModule } from '../role-users/roleuser.module';
 import { FacilitiesModule } from '../facilities/facilities.module';
 import { CityFacilityModule } from '../city-facilities/citifacilities.module';
-import { RolesModule } from '../roles/roles.module';
+import { UserService } from '../users/users.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Users]),
+    TypeOrmModule.forFeature([District]),
     forwardRef(() => RolesModule),
     forwardRef(() => RoleToUserModule),
     forwardRef(() => AuthModule),
@@ -20,8 +21,8 @@ import { RolesModule } from '../roles/roles.module';
     forwardRef(() => FacilitiesModule),
     forwardRef(() => CityFacilityModule),
   ],
-  controllers: [UserController],
-  providers: [UserService],
+  controllers: [DistrictController],
+  providers: [DistrictService, UserService],
   exports: [TypeOrmModule],
 })
-export class UserModule {}
+export class DistrictModule {}

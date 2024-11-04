@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Capital, District } from 'src/entities';
+import { Capital, District, Users } from 'src/entities';
 import { Repository } from 'typeorm';
 import { CreateDistrictDto, UpdateDistrictDto } from './dto';
 
@@ -28,25 +28,38 @@ export class DistrictService {
     return capital;
   }
 
-  async create(createDistrictDto: CreateDistrictDto): Promise<District> {
+  async create(
+    createDistrictDto: CreateDistrictDto,
+    user: Users,
+  ): Promise<District> {
     const { name, capitalid } = createDistrictDto;
 
     const capital = await this.findCapitalById(capitalid);
 
-    const newDistrict = this.districtRepository.create({
-      name,
-      capital,
-    });
+    const newDistrict = new District();
+    newDistrict.name = name;
+    newDistrict.capital = capital;
+    newDistrict.timestamp.createdBy = user;
 
     return await this.districtRepository.save(newDistrict);
   }
 
-  async findAll() {
-    return this.districtRepository
+  async findAll(page: number = 1, limit: number = 10) {
+    const [result, total] = await this.districtRepository
       .createQueryBuilder('district')
+      .where('district.deleted_at is null')
       .leftJoin('district.capital', 'capital')
       .addSelect('capital.name')
-      .getMany();
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data: result,
+      total,
+      page,
+      limit,
+    };
   }
 
   async findOne(id: number): Promise<District | null> {
@@ -63,10 +76,10 @@ export class DistrictService {
   async update(
     id: number,
     updateDistrictDto: UpdateDistrictDto,
+    user: Users
   ): Promise<District> {
     const { capitalid } = updateDistrictDto;
 
-    // Kiểm tra tính hợp lệ của `capitalId` trong bảng `capital`
     if (capitalid) {
       const capitalExists = await this.capitalRepository.findOne({
         where: { id: capitalid },
@@ -77,25 +90,20 @@ export class DistrictService {
       }
     }
 
-    // Tìm district cần cập nhật
     const district = await this.findOne(id);
 
     if (!district) {
       throw new Error(`District with id ${id} not found`);
     }
+    district.timestamp.updatedAt = new Date();
+    district.timestamp.createdBy = user;
 
-    // Gộp dữ liệu cũ và mới, sau đó lưu vào cơ sở dữ liệu
-    const updatedDistrict = { ...district, ...updateDistrictDto, id };
-    return this.districtRepository.save(updatedDistrict);
+    return this.districtRepository.save(district);
   }
 
-  async remove(id: number) {
+  async remove(id: number): Promise<void> {
     const district = await this.findOne(id);
 
-    if (!district) {
-      throw new NotFoundException();
-    }
-
-    return await this.districtRepository.remove(district);
+    await this.districtRepository.softDelete(id);
   }
 }

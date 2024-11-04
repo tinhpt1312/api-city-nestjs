@@ -1,15 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
-import {
-  Capital,
-  CityFacility,
-  Country,
-  District,
-  Facility,
-  Role,
-  Users,
-} from 'src/entities/index';
+
 
 @Injectable()
 export class PostgeresConfiguration implements TypeOrmOptionsFactory {

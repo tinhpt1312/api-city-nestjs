@@ -27,7 +27,7 @@ export class CityFacilityService {
     if (!facility || !capital) throw new Error('Facility or Capital not found');
 
     const cityFacility = new CityFacility();
-    cityFacility.capital = capital;
+    cityFacility.capitals = capital;
     cityFacility.facility = facility;
 
     return await this.cityFacilityRepository.save(cityFacility);
@@ -35,7 +35,7 @@ export class CityFacilityService {
 
   async findAll() {
     return await this.cityFacilityRepository.find({
-      relations: ['capital', 'facility'],
+      relations: ['capitals', 'facility'],
     });
   }
 

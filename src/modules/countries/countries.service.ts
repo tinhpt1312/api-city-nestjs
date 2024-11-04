@@ -1,6 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Capital, Country } from 'src/entities';
+import { Capital, Country, Users } from 'src/entities';
 import { Repository } from 'typeorm';
 import { CreateCountryDto, UpdateCountryDto } from './dto';
 
@@ -11,55 +15,76 @@ export class CountriesService {
     @InjectRepository(Capital) private capitalRepository: Repository<Capital>,
   ) {}
 
-  async create(createCountryDto: CreateCountryDto): Promise<Country> {
+  private async checkCapitalExists(capitalId: number): Promise<Capital> {
+    const capital = await this.capitalRepository.findOneBy({ id: capitalId });
+    if (!capital) {
+      throw new NotFoundException('The city is empty');
+    }
+    return capital;
+  }
+
+  async create(
+    createCountryDto: CreateCountryDto,
+    user: Users,
+  ): Promise<Country> {
     const { name, capitalid } = createCountryDto;
 
-    const capital = await this.capitalRepository.findOneBy({
-      id: capitalid,
-    });
+    const capital = await this.checkCapitalExists(capitalid);
 
-    if (!capital) throw new NotFoundException('the city is empty');
-
-    const newCountry = this.countriesRepository.create({
+    const newCountry = await this.capitalRepository.save({
       name,
       capital,
+      timestamp: { createdBy: user },
     });
 
     return await this.countriesRepository.save(newCountry);
   }
 
-  async findAll() {
-    return await this.countriesRepository
+  async findAll(page: number = 1, limit: number = 10) {
+    const [result, total] = await this.countriesRepository
       .createQueryBuilder('country')
+      .where('country.deleted_at is null')
       .leftJoin('country.capital', 'capital')
       .addSelect('capital.name')
-      .getMany();
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+    return {
+      data: result,
+      total,
+      page,
+      limit,
+    };
   }
 
   async findOne(id: number) {
-    return await this.countriesRepository
+    const country = await this.countriesRepository
       .createQueryBuilder('country')
-      .leftJoin('country.capital', 'capital')
-      .addSelect('capital.name')
-      .where('country.id= :id', { id })
+      .where('country.deleted_at is null')
+      .leftJoinAndSelect('country.capital', 'capital')
+      .where('country.id = :id', { id })
       .getOne();
+
+    if (!country) {
+      throw new NotFoundException('The country is empty');
+    }
+    return country;
   }
 
-  async update(id: number, updateCountryDto: UpdateCountryDto) {
+  async update(id: number, updateCountryDto: UpdateCountryDto, user: Users) {
     const country = await this.findOne(id);
 
-    if (!country) throw new Error('The country is empty');
+    Object.assign(country, updateCountryDto);
 
-    return await this.countriesRepository.save({ updateCountryDto, id });
+    country.timestamp.updatedAt = new Date();
+    country.timestamp.updatedBy = user;
+
+    return await this.countriesRepository.save(country);
   }
 
   async remove(id: number) {
     const country = await this.findOne(id);
 
-    if (!country) {
-      throw new NotFoundException();
-    }
-
-    return await this.countriesRepository.remove(country);
+    return await this.countriesRepository.softDelete(id);
   }
 }
