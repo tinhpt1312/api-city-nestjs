@@ -1,14 +1,14 @@
 import { Expose, Transform } from 'class-transformer';
 
-export class CapitalResponseDto {
+export class UserResponseDto {
   @Expose()
   id: number;
 
   @Expose()
-  name: string;
+  username: string;
 
   @Expose()
-  description: string;
+  email: string;
 
   @Expose()
   createdAt: Date;
@@ -16,8 +16,4 @@ export class CapitalResponseDto {
   @Expose()
   @Transform(({ obj }) => obj.timestamp.createdBy.username)
   createdBy: string;
-
-  @Expose()
-  @Transform(({ obj }) => obj.timestamp.createdBy.id)
-  createdById: number;
 }

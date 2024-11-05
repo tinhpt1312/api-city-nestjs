@@ -14,6 +14,8 @@ import { UserService } from './modules/users/users.service';
 import { EmailModule } from './modules/email/email.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { EmailConfiguration, PostgeresConfiguration } from './config';
+import { AwsS3Module } from './shared/aws-s3/s3.module';
+import { AwsS3Service } from './shared/aws-s3/s3.service';
 
 @Module({
   imports: [
@@ -36,8 +38,9 @@ import { EmailConfiguration, PostgeresConfiguration } from './config';
     RoleToUserModule,
     EmailModule,
     AuthModule,
+    AwsS3Module,
   ],
   controllers: [],
-  providers: [UserService],
+  providers: [UserService, AwsS3Service],
 })
 export class AppModule {}

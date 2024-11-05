@@ -17,6 +17,7 @@ import { JwtAuthGuard, LocalAuthGuard, RolesGuard } from './guards';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RolesService } from '../roles/roles.service';
 import { EmailService } from '../email/email.service';
+import { AwsS3Service } from 'src/shared/aws-s3/s3.service';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { EmailService } from '../email/email.service';
     AuthService,
     UserService,
     EmailService,
+    AwsS3Service,
     JwtStrategy,
     LocalStrategy,
     LocalAuthGuard,

@@ -99,7 +99,7 @@ export class AuthService {
   }
 
   private generateConfirmationCode(): string {
-    return Math.random().toString(36).substring(2, 8); // tạo mã ngẫu nhiên
+    return Math.random().toString(36).substring(2, 8);
   }
 
   async resetPassword(updatePasswordDto: UpdatePasswordDto): Promise<void> {

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -9,17 +10,18 @@ import {
   Post,
   Query,
   Req,
-  UseGuards,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserService } from './users.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
-import { Roles } from '../auth/decorator/roles.decorator';
 import { RoleEnum } from '../../types/auth.type';
 import { Request } from 'express';
 import { Users } from '../../entities';
 import { Public } from '../auth/decorator/skip-auth.decorator';
 import { Auth } from '../auth/decorator';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Auth(RoleEnum.Admin, RoleEnum.Manager)
 @ApiTags('Users')
@@ -28,13 +30,36 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  newUser(
+  @UseInterceptors(FileInterceptor('image'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        username: { type: 'string', example: 'john_doe' },
+        password: { type: 'string', example: '123' },
+        email: { type: 'string', example: 'john@example.com' },
+        capital_id: { type: 'integer', example: 1 },
+        roleid: { type: 'array', items: { type: 'integer' }, example: [1, 2] },
+        image: {
+          type: 'string',
+          format: 'binary',
+          description: 'The profile image file',
+        },
+      },
+    },
+  })
+  async newUser(
+    @UploadedFile() image: Express.Multer.File,
     @Body() createUserDto: CreateUserDto,
     @Req() request: Request & { user: Users },
   ) {
     const user = request.user;
 
-    return this.userService.create(createUserDto, user);
+    console.log('Starting newUser controller...');
+    console.log('Received DTO:', createUserDto);
+
+    return await this.userService.create({ ...createUserDto, image }, user);
   }
 
   @ApiOperation({

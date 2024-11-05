@@ -1,10 +1,11 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { Capital, Role, RoleToUser, Users } from 'src/entities';
 import { Repository, In } from 'typeorm';
-import { CreateUserDto, UpdateUserDto } from './dto';
+import { CreateUserDto, UpdateUserDto, UserResponseDto } from './dto';
 import * as bcrypt from 'bcrypt';
 import { Injectable } from '@nestjs/common/decorators';
 import { NotFoundException } from '@nestjs/common/exceptions';
+import { AwsS3Service } from 'src/shared/aws-s3/s3.service';
 
 @Injectable()
 export class UserService {
@@ -20,6 +21,8 @@ export class UserService {
 
     @InjectRepository(RoleToUser)
     private readonly roleUserRepository: Repository<RoleToUser>,
+
+    private readonly awsS3Service: AwsS3Service,
   ) {}
 
   private async findCapitalById(capitalId: number): Promise<Capital> {
@@ -38,19 +41,26 @@ export class UserService {
     return roles;
   }
 
-  async create(createUserDto: CreateUserDto, user: Users): Promise<Users> {
-    const { username, password, email, image, capitalid, roleid } =
-      createUserDto;
+  async create(
+    createUserDto: CreateUserDto & { image: Express.Multer.File },
+    user: Users,
+  ): Promise<UserResponseDto> {
+    const { username, password, email, capital_id, roleid } = createUserDto;
 
-    const capital = await this.findCapitalById(capitalid);
+    const capital = await this.findCapitalById(capital_id);
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    let fileName = null;
+    if (createUserDto.image) {
+      fileName = await this.awsS3Service.uploadFile(createUserDto.image);
+    }
 
     const newUser = this.userRepository.create({
       username,
       password: hashedPassword,
       email,
-      image,
+      image: fileName,
       capital,
     });
     newUser.timestamp.createdBy = user;
@@ -66,8 +76,46 @@ export class UserService {
 
     await this.roleUserRepository.save(userRoles);
 
-    return newUser;
+    const userResponse = new UserResponseDto();
+    userResponse.id = newUser.id;
+    userResponse.username = newUser.username;
+    userResponse.email = newUser.email;
+    userResponse.createdAt = newUser.timestamp.createdAt;
+    userResponse.createdBy = newUser.timestamp.createdBy?.username;
+
+    return userResponse;
   }
+
+  // async create(createUserDto: CreateUserDto, user: Users): Promise<Users> {
+  //   const { username, password, email, image, capitalid, roleid } =
+  //     createUserDto;
+
+  //   const capital = await this.findCapitalById(capitalid);
+
+  //   const hashedPassword = await bcrypt.hash(password, 10);
+
+  //   const newUser = this.userRepository.create({
+  //     username,
+  //     password: hashedPassword,
+  //     email,
+  //     image,
+  //     capital,
+  //   });
+  //   newUser.timestamp.createdBy = user;
+
+  //   await this.userRepository.save(newUser);
+
+  //   const roles = await this.findRolesByIds(roleid);
+
+  //   const userRoles = roles.map((role) => ({
+  //     role,
+  //     user: newUser,
+  //   }));
+
+  //   await this.roleUserRepository.save(userRoles);
+
+  //   return newUser;
+  // }
 
   async findAll(page: number = 1, limit: number = 10) {
     const [result, total] = await this.userRepository
@@ -117,10 +165,6 @@ export class UserService {
       email,
     });
     return this.userRepository.save(newUser);
-  }
-
-  async findUserByUsername(username: string): Promise<Users | undefined> {
-    return this.userRepository.findOne({ where: { username } });
   }
 
   async update(

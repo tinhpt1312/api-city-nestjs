@@ -10,6 +10,7 @@ import { RoleToUserModule } from '../role-users/roleuser.module';
 import { FacilitiesModule } from '../facilities/facilities.module';
 import { CityFacilityModule } from '../city-facilities/citifacilities.module';
 import { UserService } from '../users/users.service';
+import { AwsS3Service } from 'src/shared/aws-s3/s3.service';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { UserService } from '../users/users.service';
     forwardRef(() => CityFacilityModule),
   ],
   controllers: [DistrictController],
-  providers: [DistrictService, UserService],
+  providers: [DistrictService, UserService, AwsS3Service],
   exports: [TypeOrmModule],
 })
 export class DistrictModule {}

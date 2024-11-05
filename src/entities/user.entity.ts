@@ -30,7 +30,9 @@ export class Users {
   resetToken: string;
 
   @ManyToOne(() => Capital, (capital) => capital.users, { nullable: true })
-  @JoinColumn()
+  @JoinColumn({
+    name: 'capital_id',
+  })
   capital: Capital;
 
   @OneToMany(() => RoleToUser, (roleUser) => roleUser.user, { cascade: true })
