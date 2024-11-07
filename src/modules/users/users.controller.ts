@@ -56,9 +56,6 @@ export class UserController {
   ) {
     const user = request.user;
 
-    console.log('Starting newUser controller...');
-    console.log('Received DTO:', createUserDto);
-
     return await this.userService.create({ ...createUserDto, image }, user);
   }
 

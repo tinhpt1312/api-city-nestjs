@@ -1,11 +1,11 @@
 import { Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Facility, Capital } from './index';
 
-@Entity({ schema: 'public',name: 'cityfacilities' })
+@Entity({ schema: 'public', name: 'cityfacilities' })
 export class CityFacility {
   @PrimaryGeneratedColumn({
     name: 'id',
-    type: 'int'
+    type: 'int',
   })
   id: number;
 
@@ -15,4 +15,11 @@ export class CityFacility {
   @ManyToOne(() => Capital, (capital) => capital.cityfacilities)
   @JoinColumn({ name: 'capital_id' })
   capitals: Capital;
+
+  // @Column(() => TimestampImpl, { prefix: false })
+  // timestamp!: TimestampImpl;
+
+  // constructor() {
+  //   this.timestamp = new TimestampImpl();
+  // }
 }

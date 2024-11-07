@@ -1,7 +1,7 @@
 import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { Injectable } from '@nestjs/common';
 import { extname } from 'path';
-import { AwsS3Configuration } from 'src/config/aws';
+import { awsS3Configuration } from 'src/config/aws';
 import { Readable } from 'stream';
 import { v4 as uuid } from 'uuid';
 
@@ -11,7 +11,9 @@ export class AwsS3Service {
 
   async uploadFile(file: Express.Multer.File): Promise<string> {
     const fileExtension = extname(file.originalname);
+
     const fileName = `${uuid()}${fileExtension}`;
+
     const uploadParams = {
       Bucket: this.bucketName,
       Key: fileName,
@@ -19,7 +21,7 @@ export class AwsS3Service {
       ContentType: file.mimetype,
     };
 
-    await AwsS3Configuration.send(new PutObjectCommand(uploadParams));
+    await awsS3Configuration.send(new PutObjectCommand(uploadParams));
 
     return fileName;
   }
@@ -30,7 +32,8 @@ export class AwsS3Service {
       Key: key,
     };
 
-    const data = await AwsS3Configuration.send(new GetObjectCommand(getParams));
+    const data = await awsS3Configuration.send(new GetObjectCommand(getParams));
+
     return data.Body as Readable;
   }
 }

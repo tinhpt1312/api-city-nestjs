@@ -76,46 +76,16 @@ export class UserService {
 
     await this.roleUserRepository.save(userRoles);
 
-    const userResponse = new UserResponseDto();
-    userResponse.id = newUser.id;
-    userResponse.username = newUser.username;
-    userResponse.email = newUser.email;
-    userResponse.createdAt = newUser.timestamp.createdAt;
-    userResponse.createdBy = newUser.timestamp.createdBy?.username;
+    const userResponse = {
+      id: newUser.id,
+      username: newUser.username,
+      email: newUser.email,
+      createdAt: newUser.timestamp.createdAt,
+      createdBy: newUser.timestamp.createdBy?.username,
+    };
 
     return userResponse;
   }
-
-  // async create(createUserDto: CreateUserDto, user: Users): Promise<Users> {
-  //   const { username, password, email, image, capitalid, roleid } =
-  //     createUserDto;
-
-  //   const capital = await this.findCapitalById(capitalid);
-
-  //   const hashedPassword = await bcrypt.hash(password, 10);
-
-  //   const newUser = this.userRepository.create({
-  //     username,
-  //     password: hashedPassword,
-  //     email,
-  //     image,
-  //     capital,
-  //   });
-  //   newUser.timestamp.createdBy = user;
-
-  //   await this.userRepository.save(newUser);
-
-  //   const roles = await this.findRolesByIds(roleid);
-
-  //   const userRoles = roles.map((role) => ({
-  //     role,
-  //     user: newUser,
-  //   }));
-
-  //   await this.roleUserRepository.save(userRoles);
-
-  //   return newUser;
-  // }
 
   async findAll(page: number = 1, limit: number = 10) {
     const [result, total] = await this.userRepository
@@ -159,11 +129,13 @@ export class UserService {
     email: string,
   ): Promise<Users> {
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const newUser = this.userRepository.create({
       username,
       password: hashedPassword,
       email,
     });
+
     return this.userRepository.save(newUser);
   }
 
@@ -174,12 +146,15 @@ export class UserService {
   ): Promise<Users> {
     const existingUser = await this.findOne(id);
 
-    Object.assign(existingUser, updateUserDto);
+    Object.assign(existingUser, updateUserDto, {
+      timestamp: {
+        ...existingUser.timestamp,
+        updatedAt: new Date(),
+        updatedBy: user,
+      },
+    });
 
-    existingUser.timestamp.updatedAt = new Date();
-    existingUser.timestamp.updatedBy = user;
-
-    return await this.userRepository.save(existingUser);
+    return this.userRepository.save(existingUser);
   }
 
   async delete(id: number): Promise<void> {
@@ -199,6 +174,7 @@ export class UserService {
       const { password, ...result } = user;
       return result;
     }
+
     return null;
   }
 
