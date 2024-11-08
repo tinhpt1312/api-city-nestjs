@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -17,7 +16,7 @@ import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserService } from './users.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { RoleEnum } from '../../types/auth.type';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { Users } from '../../entities';
 import { Public } from '../auth/decorator/skip-auth.decorator';
 import { Auth } from '../auth/decorator';

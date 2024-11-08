@@ -42,12 +42,15 @@ export class UserService {
   }
 
   async create(
-    createUserDto: CreateUserDto & { image: Express.Multer.File },
+    createUserDto: CreateUserDto & { image?: Express.Multer.File },
     user: Users,
   ): Promise<UserResponseDto> {
     const { username, password, email, capital_id, roleid } = createUserDto;
 
-    const capital = await this.findCapitalById(capital_id);
+    let capital = null;
+    if (capital_id) {
+      capital = await this.findCapitalById(capital_id);
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -67,14 +70,14 @@ export class UserService {
 
     await this.userRepository.save(newUser);
 
-    const roles = await this.findRolesByIds(roleid);
-
-    const userRoles = roles.map((role) => ({
-      role,
-      user: newUser,
-    }));
-
-    await this.roleUserRepository.save(userRoles);
+    if (roleid && roleid.length > 0) {
+      const roles = await this.findRolesByIds(roleid);
+      const userRoles = roles.map((role) => ({
+        role,
+        user: newUser,
+      }));
+      await this.roleUserRepository.save(userRoles);
+    }
 
     const userResponse = {
       id: newUser.id,
@@ -162,7 +165,7 @@ export class UserService {
 
     if (!user) throw new NotFoundException(`User with ID ${id} not found`);
 
-    await this.roleUserRepository.delete({ user });
+    await this.roleUserRepository.softDelete({ user });
 
     await this.userRepository.softDelete(id);
   }

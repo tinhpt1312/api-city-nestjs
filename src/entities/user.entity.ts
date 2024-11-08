@@ -21,7 +21,7 @@ export class Users {
   password: string;
 
   @Column({ nullable: true })
-  image: string;
+  image?: string;
 
   @Column({ unique: true, nullable: false })
   email: string;

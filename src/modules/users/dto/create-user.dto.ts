@@ -18,10 +18,10 @@ export class CreateUserDto {
   email: string;
 
   @ApiProperty()
-  capital_id: number;
+  capital_id?: number;
 
   @ApiProperty({
     type: [Number],
   })
-  roleid: number[];
+  roleid?: number[];
 }

@@ -4,6 +4,7 @@ import {
   Param,
   Post,
   Res,
+  StreamableFile,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -16,8 +17,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { Response } from 'express';
 import { Public } from 'src/modules/auth/decorator';
+import { Response } from 'express';
 
 @Controller('awss3')
 @ApiTags('AWS-S3')
@@ -42,7 +43,9 @@ export class AwsS3Controller {
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(@UploadedFile() file: Express.Multer.File) {
-    return await this.awsS3Service.uploadFile(file);
+    const fileUrl = await this.awsS3Service.uploadFile(file);
+
+    return { url: fileUrl };
   }
 
   @Public()
@@ -50,6 +53,11 @@ export class AwsS3Controller {
   async getFiles(@Param('key') key: string, @Res() res: Response) {
     const fileStream = await this.awsS3Service.getFile(key);
 
-    fileStream.pipe(res);
+    res.set({
+      'Content-Type': 'application/octet-stream',
+      'Content-Disposition': `inline; filename="${key}"`,
+    });
+
+    return new StreamableFile(fileStream);
   }
 }

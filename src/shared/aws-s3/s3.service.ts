@@ -8,6 +8,7 @@ import { v4 as uuid } from 'uuid';
 @Injectable()
 export class AwsS3Service {
   private bucketName = process.env.AWS_S3_PUBLIC_BUCKET;
+  private regionName = process.env.AWS_S3_REGION;
 
   async uploadFile(file: Express.Multer.File): Promise<string> {
     const fileExtension = extname(file.originalname);
@@ -23,7 +24,7 @@ export class AwsS3Service {
 
     await awsS3Configuration.send(new PutObjectCommand(uploadParams));
 
-    return fileName;
+    return `https://${this.bucketName}.s3.${this.regionName}.amazonaws.com/${fileName}`;
   }
 
   async getFile(key: string): Promise<Readable> {
@@ -36,4 +37,8 @@ export class AwsS3Service {
 
     return data.Body as Readable;
   }
+
+  // async getFile(key: string) {
+  //   return `https://${this.bucketName}.s3.${this.regionName}.amazonaws.com/${key}`;
+  // }
 }
