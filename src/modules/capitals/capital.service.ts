@@ -91,8 +91,16 @@ export class CapitalService {
       .leftJoin('capital.districts', 'district')
       .leftJoin('capital.users', 'users')
       .leftJoin('capital.country', 'country')
-      .addSelect(['country.name', 'users.username', 'district.name'])
-      .where('capital.id = :id', { id })
+      .leftJoin('capital.cityfacilities', 'cityfacility')
+      .leftJoin('cityfacility.facility', 'facility')
+      .addSelect([
+        'country.name',
+        'users.username',
+        'district.name',
+        'facility.name',
+      ])
+      .where('capital.deleted_at IS NULL')
+      .andWhere('capital.id = :id', { id })
       .getOne();
 
     return capital;
@@ -112,7 +120,7 @@ export class CapitalService {
   async remove(id: number): Promise<void> {
     const capitals = await this.capitalRepository.findOneBy({ id });
 
-    await this.cityFacilityRepository.delete({ capitals });
+    await this.cityFacilityRepository.softDelete({ capitals });
 
     await this.capitalRepository.softDelete(id);
   }

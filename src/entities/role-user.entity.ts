@@ -1,5 +1,12 @@
-import { Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Role, Users } from './index';
+import { TimestampImpl } from './common/timestamp.impl';
 
 @Entity({ schema: 'public', name: 'role_users' })
 export class RoleToUser {
@@ -20,4 +27,11 @@ export class RoleToUser {
     name: 'user_id',
   })
   user: Users;
+
+  @Column(() => TimestampImpl, { prefix: false })
+  timestamp!: TimestampImpl;
+
+  constructor() {
+    this.timestamp = new TimestampImpl();
+  }
 }

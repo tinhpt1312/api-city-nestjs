@@ -8,9 +8,8 @@ import {
 import { Users, CityFacility, District, Country } from './index';
 import { TimestampImpl } from './common/timestamp.impl';
 
-
 @Entity({ schema: 'public', name: 'capitals' })
-export class Capital  {
+export class Capital {
   @PrimaryGeneratedColumn({
     name: 'id',
     type: 'int',
@@ -26,7 +25,7 @@ export class Capital  {
   name: string;
 
   @Column({ type: 'text', nullable: true })
-  description: string;
+  description?: string;
 
   @Column({ type: 'boolean', default: true })
   active: boolean;
@@ -52,5 +51,4 @@ export class Capital  {
   constructor() {
     this.timestamp = new TimestampImpl();
   }
-
 }

@@ -14,6 +14,10 @@ import { UserService } from './modules/users/users.service';
 import { EmailModule } from './modules/email/email.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { EmailConfiguration, PostgeresConfiguration } from './config';
+import { AwsS3Module } from './shared/aws-s3/s3.module';
+import { AwsS3Service } from './shared/aws-s3/s3.service';
+import { ScheduleModule } from '@nestjs/schedule';
+import { TasksService } from './shared/tasks/task.service';
 
 @Module({
   imports: [
@@ -26,6 +30,7 @@ import { EmailConfiguration, PostgeresConfiguration } from './config';
     MailerModule.forRootAsync({
       useClass: EmailConfiguration,
     }),
+    ScheduleModule.forRoot(),
     CapitalModule,
     UserModule,
     CityFacilityModule,
@@ -36,8 +41,9 @@ import { EmailConfiguration, PostgeresConfiguration } from './config';
     RoleToUserModule,
     EmailModule,
     AuthModule,
+    AwsS3Module,
   ],
   controllers: [],
-  providers: [UserService],
+  providers: [UserService, AwsS3Service, TasksService],
 })
 export class AppModule {}

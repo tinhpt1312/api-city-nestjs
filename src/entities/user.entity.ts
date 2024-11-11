@@ -21,7 +21,7 @@ export class Users {
   password: string;
 
   @Column({ nullable: true })
-  image: string;
+  image?: string;
 
   @Column({ unique: true, nullable: false })
   email: string;
@@ -30,7 +30,9 @@ export class Users {
   resetToken: string;
 
   @ManyToOne(() => Capital, (capital) => capital.users, { nullable: true })
-  @JoinColumn()
+  @JoinColumn({
+    name: 'capital_id',
+  })
   capital: Capital;
 
   @OneToMany(() => RoleToUser, (roleUser) => roleUser.user, { cascade: true })
